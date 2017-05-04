@@ -8,6 +8,12 @@ class ExperimentConsts:
         'abstraction', 'reward_shaping', 'similarities'
     ]
 
+    EXPERIMENT_TYPE_STRINGS = {
+        'abstraction': 'Abstraction',
+        'reward_shaping': 'Reward Shaping',
+        'similarities': 'Similarities'
+    }
+
     BASE_BRANCH_NAME = 'experiment'
     EXPERIMENT_BASE_BRANCH_NAME_FORMAT = '{base_branch_name}_{experiment_type}'
     EXPERIMENT_USER_BRANCH_NAME_FORMAT = '{user_name}_{experiment_type}'

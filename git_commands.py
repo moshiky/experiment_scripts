@@ -5,7 +5,6 @@ class GitCommands:
     CHECKOUT_BRANCH = 'git checkout {branch_name}'
 
     ADD_ALL_FILES = 'git add --all'
-    COMMIT_CHANGES = 'git commit -m "{msg}"'
+    COMMIT_CHANGES = 'git commit -a -m "{msg}"'
 
     PUSH_CHANGES = 'git push origin {branch_name}'
-
