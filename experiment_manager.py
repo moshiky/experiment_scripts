@@ -100,3 +100,14 @@ class ExperimentManager:
             answer = raw_input('Have you committed all of your changes? [y/n] ')
         if 'n' == answer:
             experiment_handler.commit_changes()
+
+        # exit manager and print farewell greetings
+        logger.log('Thank you {user_name}! this experiment phase is over.'.format(user_name=user_name))
+        logger.print_msg('We greatly appreciate your contribution.')
+        logger.print_msg('Look! You have made our rabbit happy!')
+        logger.print_msg('   (\_/)   ')
+        logger.print_msg('   (^.^)   ')
+        logger.print_msg('  \(> <)/  ')
+
+if __name__ == '__main__':
+    ExperimentManager.start()
