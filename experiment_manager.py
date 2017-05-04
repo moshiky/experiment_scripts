@@ -36,7 +36,6 @@ class ExperimentManager:
             except:
                 selected_experiment_type_index = -1
 
-
         # create experiment handler
         experiment_handler = \
             ExperimentHandler(
