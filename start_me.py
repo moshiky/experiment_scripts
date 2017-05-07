@@ -96,7 +96,7 @@ def main():
     logger = Logger()
 
     # read user name
-    user_name = raw_input("Enter your name (without spaces): ")
+    user_name = raw_input("Enter your id: ")
 
     # start interactive mode
     logger.log('Hello {user_name}! lets begin :)'.format(user_name=user_name))
@@ -129,7 +129,7 @@ def main():
         logger.print_msg('Ok, you can start working on the code, as explained to you. Good Luck!')
 
         selected_action = 0
-        while selected_action != 1:
+        while selected_action != '1':
             logger.print_msg('Now you can:')
             logger.print_msg('0 - commit changes')
             logger.print_msg('1 - end experiment')
