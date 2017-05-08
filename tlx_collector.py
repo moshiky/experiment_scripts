@@ -7,6 +7,7 @@
 #       date&time, mental demand, physical demand, temporal demand, performance, effort, frustration, overall
 
 import os
+import csv
 import time
 
 INPUT_FILE_NAME = 'tlx_output.txt'
@@ -55,7 +56,36 @@ def get_current_date_and_time():
 
 
 def add_csv_row(csv_values_dict):
-    pass
+    fields = [
+        csv_values_dict[CsvKeys.DATE_TIME],
+        csv_values_dict[CsvKeys.MENTAL_DEMAND],
+        csv_values_dict[CsvKeys.PHYSICAL_DEMAND],
+        csv_values_dict[CsvKeys.TEMPORAL_DEMAND],
+        csv_values_dict[CsvKeys.PERFORMANCE],
+        csv_values_dict[CsvKeys.EFFORT],
+        csv_values_dict[CsvKeys.FRUSTRATION],
+        csv_values_dict[CsvKeys.OVERALL]
+    ]
+
+    csv_file_path = os.path.join(os.path.dirname(__file__), CSV_FILE_PATH)
+    if not os.path.exists(csv_file_path):
+        headers = [
+            CsvKeys.DATE_TIME,
+            CsvKeys.MENTAL_DEMAND,
+            CsvKeys.PHYSICAL_DEMAND,
+            CsvKeys.TEMPORAL_DEMAND,
+            CsvKeys.PERFORMANCE,
+            CsvKeys.EFFORT,
+            CsvKeys.FRUSTRATION,
+            CsvKeys.OVERALL
+        ]
+        with open(csv_file_path, 'wb') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(headers)
+
+    with open(csv_file_path, 'ab') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(fields)
 
 
 def main():
