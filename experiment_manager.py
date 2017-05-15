@@ -14,7 +14,7 @@ class ExperimentManager:
         logger = Logger()
 
         # read user name
-        user_name = raw_input("Enter your name: (use _ instead of space) ")
+        user_name = raw_input("Enter your id: ")
 
         # start interactive mode
         logger.log('Hello {user_name}! lets begin :)'.format(user_name=user_name))
@@ -27,7 +27,7 @@ class ExperimentManager:
                 logger.log('{type_index} - {type_name}'.format(type_index=type_index, type_name=type_name))
             selected_experiment_type_index = \
                 raw_input('Please select experiment type: [0-{number_of_types}] '.format(
-                    number_of_types=len(ExperimentConsts.EXPERIMENT_TYPE_STRINGS))
+                    number_of_types=len(ExperimentConsts.EXPERIMENT_TYPE_STRINGS)-1)
                 )
 
             # validate selection
