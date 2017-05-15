@@ -1,4 +1,6 @@
 
+import os
+import shutil
 from experiment_consts import ExperimentConsts
 from experiment_handler import ExperimentHandler
 from logger import Logger
@@ -37,11 +39,12 @@ class ExperimentManager:
                 selected_experiment_type_index = -1
 
         # create experiment handler
+        experiment_type = ExperimentConsts.EXPERIMENT_TYPE_STRINGS.keys()[selected_experiment_type_index]
         experiment_handler = \
             ExperimentHandler(
                 logger,
                 ExperimentConsts.WORKING_DIRECTORY_PATH,
-                ExperimentConsts.EXPERIMENT_TYPE_STRINGS.keys()[selected_experiment_type_index],
+                experiment_type,
                 user_name
             )
 
@@ -76,6 +79,9 @@ class ExperimentManager:
                 logger.log('You can begin working on your code now, Good Luck!')
 
             elif selected_action == 2:
+                # store logs and graphs on local hard drive
+                ExperimentManager.store_logs_and_graphs(user_name, experiment_type)
+
                 # commit changes
                 experiment_handler.commit_changes()
                 logger.log('Changes committed successfully!')
@@ -107,6 +113,19 @@ class ExperimentManager:
         logger.print_msg('   (\_/)   ')
         logger.print_msg('   (^.^)   ')
         logger.print_msg('  \(> <)/  ')
+
+    @staticmethod
+    def store_logs_and_graphs(user_id, experiment_type):
+        # create remote storage
+        remote_storage_path = \
+            ExperimentConsts.REMOTE_USER_STORAGE_PATH.format(user_id=user_id, experiment_type=experiment_type)
+        os.makedirs(remote_storage_path)
+        # move folders to local location
+        shutil.move(ExperimentConsts.LOGGING_FILE_DIR, remote_storage_path)
+        shutil.move(ExperimentConsts.GRAPHS_DIR, remote_storage_path)
+        # create new empty folders instead of the original
+        os.makedirs(ExperimentConsts.LOGGING_FILE_DIR)
+        os.makedirs(ExperimentConsts.GRAPHS_DIR)
 
 if __name__ == '__main__':
     ExperimentManager.start()

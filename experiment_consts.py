@@ -25,3 +25,7 @@ class ExperimentConsts:
     LOGGING_FILE_DIR = os.path.join(os.path.dirname(__file__), 'logs')
     LOGGING_FILE_PATH_FORMAT = os.path.join(LOGGING_FILE_DIR, 'experiment_manager__{timestamp}.log')
 
+    GRAPHS_DIR = os.path.join(WORKING_DIRECTORY_PATH, 'graphs')
+
+    REMOTE_STORAGE_PATH = r'c:\exp\products'
+    REMOTE_USER_STORAGE_PATH = os.path.join(REMOTE_STORAGE_PATH, '{user_id}', '{experiment_type}')
