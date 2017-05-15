@@ -79,14 +79,14 @@ class ExperimentManager:
                 logger.log('You can begin working on your code now, Good Luck!')
 
             elif selected_action == 2:
+                # store logs and graphs on local hard drive
+                ExperimentManager.store_logs_and_graphs(user_name, experiment_type)
+
                 # commit changes
                 experiment_handler.commit_changes()
                 logger.log('Changes committed successfully!')
 
             elif selected_action == 3:
-                # store logs and graphs on local hard drive
-                ExperimentManager.store_logs_and_graphs(user_name, experiment_type)
-
                 # select mode
                 answer = ''
                 while answer not in ['y', 'n']:
