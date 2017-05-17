@@ -88,7 +88,7 @@ def add_csv_row(csv_values_dict):
         writer.writerow(fields)
 
 
-def main():
+def collect():
     # load file content
     input_file_path = os.path.join(os.path.dirname(__file__), INPUT_FILE_NAME)
     with open(input_file_path, 'rb') as input_file:
@@ -103,4 +103,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    collect()

@@ -36,8 +36,9 @@ class ExperimentHandler:
         git_command = GitCommands.CREATE_NEW_BRANCH.format(branch_name=branch_name)
         self.__run_git_command(git_command)
 
-    def __run_git_command(self, command):
+    def __run_git_command(self, command, cwd=None):
         self.__logger.log('running command: {cmd}'.format(cmd=command), should_print=False)
+
         try:
             # execute command
             output = \
@@ -46,7 +47,7 @@ class ExperimentHandler:
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    cwd=ExperimentConsts.WORKING_DIRECTORY_PATH
+                    cwd=cwd if cwd is not None else ExperimentConsts.WORKING_DIRECTORY_PATH
                 )
 
             # log command output
@@ -92,11 +93,22 @@ class ExperimentHandler:
         # commit changes
         self.__run_git_command(GitCommands.COMMIT_CHANGES.format(msg=commit_message))
 
-    def push_branch(self, push_all):
+    def push_branch(self, branch_name=None, working_directory=None, push_all=False):
         if push_all:
             # push all branches
             self.__run_git_command(GitCommands.PUSH_CHANGES.format(branch_name='--all'))
 
         else:
             # push just current branch
-            self.__run_git_command(GitCommands.PUSH_CHANGES.format(branch_name=self.__participant_branch_name))
+            self.__run_git_command(
+                GitCommands.PUSH_CHANGES.format(
+                    branch_name=branch_name if branch_name is not None else self.__participant_branch_name
+                ),
+                cwd=working_directory
+            )
+
+    def pull_branch(self, branch_name, working_directory):
+        self.__run_git_command(
+            GitCommands.PULL_CHANGES.format(branch_name=branch_name),
+            cwd=working_directory
+        )

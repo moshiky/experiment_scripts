@@ -4,6 +4,7 @@ import shutil
 from experiment_consts import ExperimentConsts
 from experiment_handler import ExperimentHandler
 from logger import Logger
+import tlx_collector
 
 
 class ExperimentManager:
@@ -80,23 +81,15 @@ class ExperimentManager:
 
             elif selected_action == 2:
                 # store logs and graphs on local hard drive
-                ExperimentManager.store_logs_and_graphs(user_name, experiment_type)
+                ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
 
                 # commit changes
                 experiment_handler.commit_changes()
                 logger.log('Changes committed successfully!')
 
             elif selected_action == 3:
-                # select mode
-                answer = ''
-                while answer not in ['y', 'n']:
-                    answer = raw_input('Push all branches (or just current one)? [y=all/n=current] ')
-                if 'y' == answer:
-                    # push all branches
-                    experiment_handler.push_branch(push_all=True)
-                else:
-                    # push just current branch
-                    experiment_handler.push_branch(push_all=False)
+                # push just current branch
+                experiment_handler.push_branch()
                 logger.log('Pushed successfully!')
 
         # verify that all changes has been committed before exit
@@ -105,6 +98,9 @@ class ExperimentManager:
             answer = raw_input('Have you committed all of your changes? [y/n] ')
         if 'n' == answer:
             experiment_handler.commit_changes()
+
+        # collect TLX results
+        ExperimentManager.__collect_tlx_results(logger, experiment_handler)
 
         # exit manager and print farewell greetings
         logger.log('Thank you {user_name}! this experiment phase is over.'.format(user_name=user_name))
@@ -115,7 +111,7 @@ class ExperimentManager:
         logger.print_msg('  \(> <)/  ')
 
     @staticmethod
-    def store_logs_and_graphs(user_id, experiment_type):
+    def __store_logs_and_graphs(user_id, experiment_type):
         # create remote storage
         remote_storage_path = \
             ExperimentConsts.REMOTE_USER_STORAGE_PATH.format(user_id=user_id, experiment_type=experiment_type)
@@ -126,6 +122,26 @@ class ExperimentManager:
         # create new empty folders instead of the original
         os.makedirs(ExperimentConsts.EXPERIMENT_LOGS_DIR_PATH)
         os.makedirs(ExperimentConsts.EXPERIMENT_GRAPHS_DIR_PATH)
+
+    @staticmethod
+    def __collect_tlx_results(logger, experiment_handler):
+        # pull latest version
+        logger.log('pulling changes')
+        experiment_handler.pull_branch(
+            branch_name=ExperimentConsts.SCRIPTS_BRANCH_NAME,
+            working_directory=ExperimentConsts.SCRIPTS_WORKING_DIRECTORY
+        )
+
+        # collect tlx results
+        logger.log('collecting tlx results')
+        tlx_collector.collect()
+
+        # push changes
+        logger.log('pushing changes')
+        experiment_handler.push_branch(
+            branch_name=ExperimentConsts.SCRIPTS_BRANCH_NAME,
+            working_directory=ExperimentConsts.SCRIPTS_WORKING_DIRECTORY
+        )
 
 if __name__ == '__main__':
     ExperimentManager.start()

@@ -8,3 +8,4 @@ class GitCommands:
     COMMIT_CHANGES = 'git commit -a -m "{msg}"'
 
     PUSH_CHANGES = 'git push origin {branch_name}'
+    PULL_CHANGES = 'git pull origin {branch_name}'
