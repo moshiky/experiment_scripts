@@ -100,7 +100,7 @@ class ExperimentManager:
             experiment_handler.commit_changes()
 
         # collect TLX results
-        ExperimentManager.__collect_tlx_results(logger, experiment_handler)
+        ExperimentManager.__collect_tlx_results(logger, experiment_handler, user_name, experiment_type)
 
         # exit manager and print farewell greetings
         logger.log('Thank you {user_name}! this experiment phase is over.'.format(user_name=user_name))
@@ -124,7 +124,7 @@ class ExperimentManager:
         os.makedirs(ExperimentConsts.EXPERIMENT_GRAPHS_DIR_PATH)
 
     @staticmethod
-    def __collect_tlx_results(logger, experiment_handler):
+    def __collect_tlx_results(logger, experiment_handler, user_name, experiment_type):
         # pull latest version
         logger.log('pulling changes')
         experiment_handler.pull_branch(
@@ -134,7 +134,7 @@ class ExperimentManager:
 
         # collect tlx results
         logger.log('collecting tlx results')
-        tlx_collector.collect()
+        tlx_collector.collect(user_name, experiment_type)
 
         # push changes
         logger.log('pushing changes')

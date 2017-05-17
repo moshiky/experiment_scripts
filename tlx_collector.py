@@ -8,6 +8,7 @@
 
 import os
 import csv
+import sys
 import time
 
 INPUT_FILE_NAME = 'tlx_output.txt'
@@ -15,6 +16,8 @@ CSV_FILE_PATH = 'results.csv'
 
 
 class CsvKeys:
+    USER_NAME = 'user_name'
+    EXPERIMENT_TYPE = 'experiment_type'
     DATE_TIME = 'date_time'
     MENTAL_DEMAND = 'mental_demand'
     PHYSICAL_DEMAND = 'physical_demand'
@@ -57,6 +60,8 @@ def get_current_date_and_time():
 
 def add_csv_row(csv_values_dict):
     fields = [
+        csv_values_dict[CsvKeys.USER_NAME],
+        csv_values_dict[CsvKeys.EXPERIMENT_TYPE],
         csv_values_dict[CsvKeys.DATE_TIME],
         csv_values_dict[CsvKeys.MENTAL_DEMAND],
         csv_values_dict[CsvKeys.PHYSICAL_DEMAND],
@@ -70,6 +75,8 @@ def add_csv_row(csv_values_dict):
     csv_file_path = os.path.join(os.path.dirname(__file__), CSV_FILE_PATH)
     if not os.path.exists(csv_file_path):
         headers = [
+            CsvKeys.USER_NAME,
+            CsvKeys.EXPERIMENT_TYPE,
             CsvKeys.DATE_TIME,
             CsvKeys.MENTAL_DEMAND,
             CsvKeys.PHYSICAL_DEMAND,
@@ -88,7 +95,7 @@ def add_csv_row(csv_values_dict):
         writer.writerow(fields)
 
 
-def collect():
+def collect(user_name, experiment_type):
     # load file content
     input_file_path = os.path.join(os.path.dirname(__file__), INPUT_FILE_NAME)
     with open(input_file_path, 'rb') as input_file:
@@ -98,9 +105,11 @@ def collect():
     tlx_parsed_content = parse_tlx_content(tlx_raw_content)
 
     # add content to csv
+    tlx_parsed_content[CsvKeys.USER_NAME] = user_name
+    tlx_parsed_content[CsvKeys.EXPERIMENT_TYPE] = experiment_type
     tlx_parsed_content[CsvKeys.DATE_TIME] = get_current_date_and_time()
     add_csv_row(tlx_parsed_content)
 
 
 if __name__ == '__main__':
-    collect()
+    collect(sys.argv[1], sys.argv[2])
