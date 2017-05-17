@@ -6,3 +6,4 @@ user_name,experiment_type,date_time,mental_demand,physical_demand,temporal_deman
 <missing>,<missing>,2017_05_16__17_30_15,90,5,80,35,95,30,55.833333333333336
 <missing>,<missing>,2017_05_17__11_08_09,95,5,80,65,65,70,63.333333333333336
 201120441,similarities,2017_05_17__15_13_26,75,10,100,85,65,85,70
+304837974,reward_shaping,2017_05_17__16_11_17,60,15,70,15,10,20,31.666666666666668
