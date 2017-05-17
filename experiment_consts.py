@@ -32,5 +32,4 @@ class ExperimentConsts:
     REMOTE_USER_STORAGE_PATH = os.path.join(REMOTE_STORAGE_PATH, '{user_id}', '{experiment_type}')
 
     SCRIPTS_BRANCH_NAME = 'single_experiment'
-    EXPERIMENT_SCRIPTS_FOLDER_NAME = 'predator_experiment_scripts'
-    SCRIPTS_WORKING_DIRECTORY = os.path.join(os.path.dirname(__file__), '..', EXPERIMENT_SCRIPTS_FOLDER_NAME)
+    SCRIPTS_WORKING_DIRECTORY = os.path.dirname(__file__)

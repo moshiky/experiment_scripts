@@ -137,7 +137,10 @@ class ExperimentManager:
         tlx_collector.collect(user_name, experiment_type)
 
         # commit changes
-        experiment_handler.commit_changes("* add tlx results", working_directory=ExperimentConsts.SCRIPTS_WORKING_DIRECTORY)
+        experiment_handler.commit_changes(
+            comment="* add tlx results",
+            working_directory=ExperimentConsts.SCRIPTS_WORKING_DIRECTORY
+        )
 
         # push changes
         logger.log('pushing changes')
