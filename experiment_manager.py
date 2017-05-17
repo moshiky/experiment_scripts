@@ -84,7 +84,7 @@ class ExperimentManager:
                 ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
 
                 # commit changes
-                experiment_handler.commit_changes()
+                experiment_handler.commit_changes("* code completed")
                 logger.log('Changes committed successfully!')
 
             elif selected_action == 3:
@@ -97,7 +97,7 @@ class ExperimentManager:
         while answer not in ['y', 'n']:
             answer = raw_input('Have you committed all of your changes? [y/n] ')
         if 'n' == answer:
-            experiment_handler.commit_changes()
+            experiment_handler.commit_changes("* code completed")
 
         # collect TLX results
         ExperimentManager.__collect_tlx_results(logger, experiment_handler, user_name, experiment_type)
@@ -135,6 +135,9 @@ class ExperimentManager:
         # collect tlx results
         logger.log('collecting tlx results')
         tlx_collector.collect(user_name, experiment_type)
+
+        # commit changes
+        experiment_handler.commit_changes("* add tlx results")
 
         # push changes
         logger.log('pushing changes')

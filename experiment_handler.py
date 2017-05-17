@@ -82,16 +82,19 @@ class ExperimentHandler:
             user_name=participant_name, experiment_type=self.__experiment_type
         )
 
-    def commit_changes(self):
-        # ask the user for short description of the changes
-        self.__logger.log('Please briefly explain what have you done: ')
-        commit_message = raw_input()
+    def commit_changes(self, comment=None, working_directory=None):
+        if comment is None:
+            # ask the user for short description of the changes
+            self.__logger.log('Please briefly explain what have you done: ')
+            commit_message = raw_input()
+        else:
+            commit_message = comment
 
         # add all files
-        self.__run_git_command(GitCommands.ADD_ALL_FILES)
+        # self.__run_git_command(GitCommands.ADD_ALL_FILES, cwd=working_directory)
 
         # commit changes
-        self.__run_git_command(GitCommands.COMMIT_CHANGES.format(msg=commit_message))
+        self.__run_git_command(GitCommands.COMMIT_CHANGES.format(msg=commit_message), cwd=working_directory)
 
     def push_branch(self, branch_name=None, working_directory=None, push_all=False):
         if push_all:
