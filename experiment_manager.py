@@ -121,11 +121,11 @@ class ExperimentManager:
             ExperimentConsts.REMOTE_USER_STORAGE_PATH.format(user_id=user_id, experiment_type=experiment_type)
         os.makedirs(remote_storage_path)
         # move folders to local location
-        shutil.move(ExperimentConsts.LOGGING_FILE_DIR, remote_storage_path)
-        shutil.move(ExperimentConsts.GRAPHS_DIR, remote_storage_path)
+        shutil.move(ExperimentConsts.EXPERIMENT_LOGS_DIR_PATH, remote_storage_path)
+        shutil.move(ExperimentConsts.EXPERIMENT_GRAPHS_DIR_PATH, remote_storage_path)
         # create new empty folders instead of the original
-        os.makedirs(ExperimentConsts.LOGGING_FILE_DIR)
-        os.makedirs(ExperimentConsts.GRAPHS_DIR)
+        os.makedirs(ExperimentConsts.EXPERIMENT_LOGS_DIR_PATH)
+        os.makedirs(ExperimentConsts.EXPERIMENT_GRAPHS_DIR_PATH)
 
 if __name__ == '__main__':
     ExperimentManager.start()
