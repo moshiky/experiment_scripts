@@ -37,7 +37,7 @@ class ExperimentHandler:
         self.__run_git_command(git_command)
 
     def __run_git_command(self, command, cwd=None):
-        self.__logger.log('running command: {cmd}'.format(cmd=command), should_print=False)
+        self.__logger.log('running command: {cmd}, on: {cwd}'.format(cmd=command, cwd=cwd), should_print=False)
 
         try:
             # execute command
@@ -51,13 +51,14 @@ class ExperimentHandler:
                 )
 
             # log command output
-            self.__logger.log('command output:', should_print=False)
             has_errors = False
+            output_lines = 'command output:'
             for line in output.stdout.readlines():
-                self.__logger.log(line, should_print=False)
+                output_lines += '\n' + line
                 # check for errors
                 if line.lower().find('error') != -1:
                     has_errors = True
+            self.__logger.log(output_lines, should_print=False)
 
             # log return value
             return_value = output.wait()
@@ -89,9 +90,6 @@ class ExperimentHandler:
             commit_message = raw_input()
         else:
             commit_message = comment
-
-        # add all files
-        # self.__run_git_command(GitCommands.ADD_ALL_FILES, cwd=working_directory)
 
         # commit changes
         self.__run_git_command(GitCommands.COMMIT_CHANGES.format(msg=commit_message), cwd=working_directory)

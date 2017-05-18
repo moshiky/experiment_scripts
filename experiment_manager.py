@@ -62,6 +62,7 @@ class ExperimentManager:
             logger.print_msg('3 - push branch(es)')
             selected_action = raw_input('Enter your selection: [0-3] ')
 
+            logger.log('option selected: {selected_action}'.format(selected_action=selected_action), should_print=False)
             try:
                 selected_action = int(selected_action)
                 if selected_action not in range(4):
