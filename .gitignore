@@ -92,4 +92,5 @@ ENV/
 .idea/
 
 # Custom
+logs/
 tlx_output.txt
