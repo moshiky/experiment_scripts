@@ -21,26 +21,23 @@ class ExperimentManager:
         logger.log('Hello {user_name}! lets begin :)'.format(user_name=user_name))
 
         # get experiment type
-        selected_experiment_type_index = -1
-        while selected_experiment_type_index < 0:
+        selected_experiment_type_key = '-'
+        while selected_experiment_type_key not in ExperimentConsts.EXPERIMENT_TYPE_KEYS.keys():
             logger.log('Available experiments:')
-            for type_index, type_name in enumerate(ExperimentConsts.EXPERIMENT_TYPE_STRINGS.values()):
-                logger.log('{type_index} - {type_name}'.format(type_index=type_index, type_name=type_name))
-            selected_experiment_type_index = \
-                raw_input('Please select experiment type: [0-{number_of_types}] '.format(
-                    number_of_types=len(ExperimentConsts.EXPERIMENT_TYPE_STRINGS)-1)
+            for type_key in ExperimentConsts.EXPERIMENT_TYPE_KEYS.keys():
+                logger.log('{type_key} - {type_name}'.format(
+                    type_key=type_key,
+                    type_name=ExperimentConsts.EXPERIMENT_TYPE_STRINGS[
+                        ExperimentConsts.EXPERIMENT_TYPE_KEYS[type_key]
+                    ])
+                )
+            selected_experiment_type_key = \
+                raw_input('Please select experiment type: '.format(
+                    number_of_types=len(ExperimentConsts.EXPERIMENT_TYPE_KEYS)-1)
                 )
 
-            # validate selection
-            try:
-                selected_experiment_type_index = int(selected_experiment_type_index)
-                if selected_experiment_type_index not in range(len(ExperimentConsts.EXPERIMENT_TYPE_STRINGS)):
-                    selected_experiment_type_index = -1
-            except:
-                selected_experiment_type_index = -1
-
         # create experiment handler
-        experiment_type = ExperimentConsts.EXPERIMENT_TYPE_STRINGS.keys()[selected_experiment_type_index]
+        experiment_type = ExperimentConsts.EXPERIMENT_TYPE_KEYS[selected_experiment_type_key]
         experiment_handler = \
             ExperimentHandler(
                 logger,
@@ -49,78 +46,35 @@ class ExperimentManager:
                 user_name
             )
 
-        # show basic gui - select action:
-        # 0 - initiate experiment for user
-        # 1 - save changes
-        # 2 - exit
-        exit_selected = False
-        auto_exit = False
-        while not exit_selected:
+        # initiate participant branch
+        experiment_handler.initiate_for_participant()
+        logger.log('You can begin working on your code now, Good Luck!')
+
+        # show basic gui - select action
+        selected_action = '-'
+        while selected_action not in ['E', 'F']:
             logger.print_msg('Available actions:')
-            logger.print_msg('0 - end experiment')
-            logger.print_msg('1 - initiate participant branch')
-            logger.print_msg('2 - commit changes')
-            logger.print_msg('3 - push branch(es)')
-            logger.print_msg('4 - auto finish experiment')
-            selected_action = raw_input('Enter your selection: [0-4] ')
+            logger.print_msg('E - exit without saving')
+            logger.print_msg('F - finish experiment')
+            selected_action = raw_input('Enter your selection: ')
 
             logger.log('option selected: {selected_action}'.format(selected_action=selected_action), should_print=False)
-            try:
-                selected_action = int(selected_action)
-                if selected_action not in range(5):
-                    continue
-            except:
-                continue
 
-            # apply selected action
-            if selected_action == 0:
-                # exit experiment manager
-                exit_selected = True
+        # apply selected action
+        if selected_action == 'F':
+            # store logs and graphs on local hard drive
+            ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
 
-            elif selected_action == 1:
-                # initiate participant branch
-                experiment_handler.initiate_for_participant()
-                logger.log('You can begin working on your code now, Good Luck!')
+            # commit changes
+            experiment_handler.commit_changes("* code completed")
+            logger.log('Changes committed successfully!')
 
-            elif selected_action == 2:
-                # store logs and graphs on local hard drive
-                ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
+            # push just current branch
+            experiment_handler.push_branch()
+            logger.log('Pushed successfully!')
 
-                # commit changes
-                experiment_handler.commit_changes("* code completed")
-                logger.log('Changes committed successfully!')
-
-            elif selected_action == 3:
-                # push just current branch
-                experiment_handler.push_branch()
-                logger.log('Pushed successfully!')
-
-            elif selected_action == 4:
-                # store logs and graphs on local hard drive
-                ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
-
-                # commit changes
-                experiment_handler.commit_changes("* code completed")
-                logger.log('Changes committed successfully!')
-
-                # push just current branch
-                experiment_handler.push_branch()
-                logger.log('Pushed successfully!')
-
-                # exit experiment manager
-                exit_selected = True
-                auto_exit = True
-
-        if not auto_exit:
-            # verify that all changes has been committed before exit
-            answer = ''
-            while answer not in ['y', 'n']:
-                answer = raw_input('Have you committed all of your changes? [y/n] ')
-            if 'n' == answer:
-                experiment_handler.commit_changes("* code completed")
-
-        # collect TLX results
-        ExperimentManager.__collect_tlx_results(logger, experiment_handler, user_name, experiment_type)
+            # collect TLX results
+            ExperimentManager.__collect_tlx_results(logger, experiment_handler, user_name, experiment_type)
 
         # exit manager and print farewell greetings
         logger.log('Thank you {user_name}! this experiment phase is over.'.format(user_name=user_name))
