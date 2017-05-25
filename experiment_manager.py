@@ -54,18 +54,20 @@ class ExperimentManager:
         # 1 - save changes
         # 2 - exit
         exit_selected = False
+        auto_exit = False
         while not exit_selected:
             logger.print_msg('Available actions:')
             logger.print_msg('0 - end experiment')
             logger.print_msg('1 - initiate participant branch')
             logger.print_msg('2 - commit changes')
             logger.print_msg('3 - push branch(es)')
-            selected_action = raw_input('Enter your selection: [0-3] ')
+            logger.print_msg('4 - auto finish experiment')
+            selected_action = raw_input('Enter your selection: [0-4] ')
 
             logger.log('option selected: {selected_action}'.format(selected_action=selected_action), should_print=False)
             try:
                 selected_action = int(selected_action)
-                if selected_action not in range(4):
+                if selected_action not in range(5):
                     continue
             except:
                 continue
@@ -93,12 +95,29 @@ class ExperimentManager:
                 experiment_handler.push_branch()
                 logger.log('Pushed successfully!')
 
-        # verify that all changes has been committed before exit
-        answer = ''
-        while answer not in ['y', 'n']:
-            answer = raw_input('Have you committed all of your changes? [y/n] ')
-        if 'n' == answer:
-            experiment_handler.commit_changes("* code completed")
+            elif selected_action == 4:
+                # store logs and graphs on local hard drive
+                ExperimentManager.__store_logs_and_graphs(user_name, experiment_type)
+
+                # commit changes
+                experiment_handler.commit_changes("* code completed")
+                logger.log('Changes committed successfully!')
+
+                # push just current branch
+                experiment_handler.push_branch()
+                logger.log('Pushed successfully!')
+
+                # exit experiment manager
+                exit_selected = True
+                auto_exit = True
+
+        if not auto_exit:
+            # verify that all changes has been committed before exit
+            answer = ''
+            while answer not in ['y', 'n']:
+                answer = raw_input('Have you committed all of your changes? [y/n] ')
+            if 'n' == answer:
+                experiment_handler.commit_changes("* code completed")
 
         # collect TLX results
         ExperimentManager.__collect_tlx_results(logger, experiment_handler, user_name, experiment_type)
