@@ -12,21 +12,35 @@ class JavaExecutionManager:
 
     def run_code(self, source_dir_path):
         # build output dirs
+        user_results_dir_name = os.path.basename(os.path.dirname(source_dir_path))
+        user_id = user_results_dir_name.split('_')[0]
+        run_type = '_'.join(user_results_dir_name.split('_')[1:])
+
         class_files_dir_path = \
             os.path.join(
                 JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
-                os.path.basename(source_dir_path),
+                user_id,
+                run_type,
                 'compiled_code'
             )
-        os.makedirs(class_files_dir_path)
+        try:
+            os.makedirs(class_files_dir_path)
+        except WindowsError, ex:
+            if ex.winerror != 183:
+                raise ex
 
         logs_dir_path = \
             os.path.join(
                 JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
-                os.path.basename(source_dir_path),
+                user_id,
+                run_type,
                 'logs'
             )
-        os.makedirs(logs_dir_path)
+        try:
+            os.makedirs(logs_dir_path)
+        except WindowsError, ex:
+            if ex.winerror != 183:
+                raise ex
 
         # compile code
         self.__compile_code(source_dir_path, class_files_dir_path)
