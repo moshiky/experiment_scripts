@@ -1,0 +1,124 @@
+
+import os
+import subprocess
+from logger import Logger
+from java_execution_manager_consts import JavaExecutionManagerConsts
+
+
+class JavaExecutionManager:
+
+    def __init__(self, p_logger):
+        self.__logger = p_logger
+
+    def run_code(self, source_dir_path):
+        # build output dirs
+        class_files_dir_path = \
+            os.path.join(
+                JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
+                os.path.basename(source_dir_path),
+                'compiled_code'
+            )
+        os.makedirs(class_files_dir_path)
+
+        logs_dir_path = \
+            os.path.join(
+                JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
+                os.path.basename(source_dir_path),
+                'logs'
+            )
+        os.makedirs(logs_dir_path)
+
+        # compile code
+        self.__compile_code(source_dir_path, class_files_dir_path)
+
+        # run compiled code
+        self.__run_compiled_code(class_files_dir_path)
+
+    def __run_compiled_code(self, class_files_dir_path):
+        # build run command
+        command = \
+            JavaExecutionManagerConsts.RUN_COMMAND_TEMPLATE.format(
+                execute_file_path=os.path.join(
+                    JavaExecutionManagerConsts.JDK_PATH,
+                    JavaExecutionManagerConsts.EXECUTE_FILE_NAME
+                ),
+                dependencies=';'.join(
+                    [class_files_dir_path] +
+                    map(
+                        lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
+                        JavaExecutionManagerConsts.DEPENDENCY_LIBS
+                    )
+                ),
+                main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
+            )
+
+        # run command
+        self.__run_executable(command, cwd=os.path.dirname(class_files_dir_path))
+
+    def __compile_code(self, source_dir_path, class_files_dir_path):
+        # build params list
+        command = \
+            JavaExecutionManagerConsts.COMPILE_COMMAND_TEMPLATE.format(
+                compiler_path=os.path.join(
+                    JavaExecutionManagerConsts.JDK_PATH,
+                    JavaExecutionManagerConsts.COMPILER_FILE_NAME
+                ),
+                dependencies=';'.join(
+                    map(
+                        lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
+                        JavaExecutionManagerConsts.DEPENDENCY_LIBS
+                    )
+                ),
+                output_path=class_files_dir_path,
+                source_path=' '.join(
+                    map(
+                        lambda name: os.path.join(source_dir_path, name),
+                        JavaExecutionManagerConsts.SOURCE_FILES
+                    )
+                )
+            )
+
+        # run command
+        self.__run_executable(command)
+
+    def __run_executable(self, command, cwd=None):
+        self.__logger.log('running command: {cmd}, on: {cwd}'.format(cmd=command, cwd=cwd), should_print=False)
+        try:
+            # execute command
+            output = \
+                subprocess.Popen(
+                    command,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    cwd=cwd
+                )
+
+            # log command output
+            has_errors = False
+            output_lines = 'command output:'
+            for line in output.stdout.readlines():
+                output_lines += '\n' + line
+                # check for errors
+                if line.lower().find('error') != -1:
+                    has_errors = True
+            self.__logger.log(output_lines, should_print=False)
+
+            # log return value
+            return_value = output.wait()
+            self.__logger.log('return value: {return_value}'.format(return_value=return_value), should_print=False)
+
+            # exit if has errors
+            if has_errors or return_value != 0:
+                raise Exception('External command failed. see log file for more details.')
+
+        except Exception, ex:
+            self.__logger.error('command failed with exception: {ex}'.format(ex=ex))
+            self.__logger.error('exiting')
+            exit(0)
+
+
+if __name__ == '__main__':
+    logger = Logger()
+    compiler = JavaExecutionManager(logger)
+    compiler.run_code(r'c:\exp\predator_experiment_3')
