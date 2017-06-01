@@ -1,4 +1,1 @@
 user_name,experiment_type,date_time,mental_demand,physical_demand,temporal_demand,performance,effort,frustration,overall
-mc_test,abstraction,2017_06_01__17_32_11,30,75,35,60,55,70,54.166666666666664
-mc_test,similarities,2017_06_01__17_33_15,30,75,35,60,55,70,54.166666666666664
-mc_test,reward_shaping,2017_06_01__17_35_05,30,75,35,60,55,70,54.166666666666664
