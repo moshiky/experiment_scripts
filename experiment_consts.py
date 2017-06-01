@@ -14,6 +14,12 @@ class ExperimentConsts:
         'similarities': 'Similarities'
     }
 
+    EXPERIMENT_TYPE_KEYS = {
+        'A': 'abstraction',
+        'R': 'reward_shaping',
+        'S': 'similarities'
+    }
+
     BASE_BRANCH_NAME = 'experiment'
     EXPERIMENT_BASE_BRANCH_NAME_FORMAT = '{base_branch_name}_{experiment_type}'
     EXPERIMENT_USER_BRANCH_NAME_FORMAT = '{user_name}_{experiment_type}'
