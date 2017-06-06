@@ -54,5 +54,5 @@ class GitHandler:
                 raise Exception('Git command failed. see log file for more details.')
 
         except Exception, ex:
-            self.__logger.error('command failed with exception: {ex}'.format(ex=ex))
+            self.__logger.error('command failed with exception: {ex}'.format(ex=ex), False)
             raise ex

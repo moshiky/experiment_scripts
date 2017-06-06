@@ -124,12 +124,11 @@ class JavaExecutionManager:
 
             # exit if has errors
             if has_errors or return_value != 0:
-                raise Exception('External command failed. see log file for more details.')
+                raise Exception(JavaExecutionManagerConsts.COMMAND_FAILED_EXCEPTION_STRING)
 
         except Exception, ex:
             self.__logger.error('command failed with exception: {ex}'.format(ex=ex))
-            self.__logger.error('exiting')
-            exit(0)
+            raise ex
 
 
 if __name__ == '__main__':

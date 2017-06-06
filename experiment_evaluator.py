@@ -22,7 +22,10 @@ class ExperimentEvaluator:
         # read id list
         with open(EvaluationConsts.ID_FILE_PATH, 'rb') as user_ids_file:
             user_ids = user_ids_file.read().replace('\r', '').split('\n')
-        self.__logger.log("ids:\n{ids}".format(ids=user_ids))
+
+        if user_ids[-1] == '':
+            user_ids = user_ids[:-1]
+        self.__logger.log("ids:\n{ids}".format(ids='\n'.join(user_ids)))
 
         # checkout the evaluation code
         self.__git_handler.checkout_branch(
@@ -118,6 +121,8 @@ class ExperimentEvaluator:
                     self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
                 except Exception, ex:
                     failed_branches[user_branch_name] = ex.message
+
+        self.__logger.log("failed branches:\n{failed_branches}".format(failed_branches=failed_branches))
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()

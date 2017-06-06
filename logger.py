@@ -10,8 +10,8 @@ class Logger:
             ExperimentConsts.LOGGING_FILE_PATH_FORMAT.format(timestamp=time.strftime('%d_%m_%Y__%H_%M_%S'))
         self.log('Logger created', should_print=False)
 
-    def error(self, msg):
-        self.log('ERROR: {msg}'.format(msg=msg))
+    def error(self, msg, should_print=True):
+        self.log('ERROR: {msg}'.format(msg=msg), should_print)
 
     def log(self, msg, should_print=True):
         formatter_msg = '[{timestamp}] >> {msg}'.format(timestamp=time.strftime('%d/%m/%Y %H:%M:%S'), msg=msg)
