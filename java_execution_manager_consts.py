@@ -6,9 +6,9 @@ class JavaExecutionManagerConsts:
 
     # need to be verified and configured before each run
 
-    JDK_PATH = r'C:\Program Files\Java\jdk1.8.0_121\bin'
+    JDK_PATH = r'C:\Program Files\Java\jdk1.8.0_131\bin'
 
-    DEPENDENCY_LIB_PATH = r'C:\Users\Dev\Downloads\jfreechart-1.0.19\jfreechart-1.0.19\lib'
+    DEPENDENCY_LIB_PATH = r'C:\exp\jfreechart-1.0.19\jfreechart-1.0.19\lib'
 
     # custom values for each experiment type
 

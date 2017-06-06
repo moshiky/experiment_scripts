@@ -122,7 +122,9 @@ class ExperimentEvaluator:
                 except Exception, ex:
                     failed_branches[user_branch_name] = ex.message
 
-        self.__logger.log("failed branches:\n{failed_branches}".format(failed_branches=failed_branches))
+        self.__logger.log("failed branches:\n{failed_branches}".format(
+            failed_branches='\n'.join(key + ' = ' + failed_branches[key] for key in failed_branches.keys())
+        ))
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
