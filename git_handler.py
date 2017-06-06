@@ -16,7 +16,6 @@ class GitHandler:
             self.__run_git_command(git_command, cwd=working_directory)
         except Exception, ex:
             if self.__last_output.find('did not match any file(s) known to git') > -1:
-                self.__logger.log('branch not found')
                 raise Exception(EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING)
             else:
                 raise ex

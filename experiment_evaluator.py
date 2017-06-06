@@ -17,15 +17,21 @@ class ExperimentEvaluator:
 
     def generate_results(self):
 
+        self.__logger.log("begin result generation")
+
         # read id list
         with open(EvaluationConsts.ID_FILE_PATH, 'rb') as user_ids_file:
             user_ids = user_ids_file.read().replace('\r', '').split('\n')
+        self.__logger.log("ids:\n{ids}".format(ids=user_ids))
 
         # checkout the evaluation code
         self.__git_handler.checkout_branch(
             EvaluationConsts.EVALUATION_BRANCH_NAME,
             EvaluationConsts.EVALUATION_SOURCE_PATH
         )
+
+        # dictionary that contains all the problematic branches
+        failed_branches = dict()
 
         # for each experiment type
         for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
@@ -65,9 +71,11 @@ class ExperimentEvaluator:
                     )
                 except Exception, ex:
                     if ex.message.find(EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING) > -1:
-                        continue
+                        self.__logger.error('branch not found: {branch_name}'.format(branch_name=user_branch_name))
+                        failed_branches[user_branch_name] = EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING
                     else:
-                        raise ex
+                        failed_branches[user_branch_name] = ex.message
+                    continue
 
                 # duplicate evaluation code
                 evaluation_with_user_code_folder_path = \
@@ -106,7 +114,10 @@ class ExperimentEvaluator:
                     shutil.copy2(source_path, destination_path)
 
                 # compile and run code
-                self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
+                try:
+                    self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
+                except Exception, ex:
+                    failed_branches[user_branch_name] = ex.message
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()

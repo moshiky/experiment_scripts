@@ -34,3 +34,4 @@ class EvaluationConsts:
     }
 
     BRANCH_NOT_FOUND_EXCEPTION_STRING = 'BRANCH_NOT_FOUND'
+
