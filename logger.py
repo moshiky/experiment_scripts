@@ -19,7 +19,7 @@ class Logger:
             log_file.write('{msg}\n'.format(msg=formatter_msg))
 
         if should_print:
-            self.print_msg(msg)
+            self.print_msg(formatter_msg)
 
     def print_msg(self, msg):
         print msg

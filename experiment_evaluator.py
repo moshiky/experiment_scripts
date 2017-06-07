@@ -25,7 +25,7 @@ class ExperimentEvaluator:
 
         if user_ids[-1] == '':
             user_ids = user_ids[:-1]
-        self.__logger.log("ids:\n{ids}".format(ids='\n'.join(user_ids)))
+        self.__logger.log("running {num_ids} ids:\n{ids}".format(num_ids=len(user_ids), ids='\n'.join(user_ids)))
 
         # checkout the evaluation code
         self.__git_handler.checkout_branch(
@@ -66,6 +66,7 @@ class ExperimentEvaluator:
                         user_name=user_id,
                         experiment_type=experiment_type
                     )
+                self.__logger.log('running {branch_name}'.format(branch_name=user_branch_name))
 
                 try:
                     self.__git_handler.checkout_branch(
