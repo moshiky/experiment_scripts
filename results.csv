@@ -21,3 +21,4 @@ user_name,experiment_type,date_time,mental_demand,physical_demand,temporal_deman
 308576586,reward_shaping,2017_06_15__16_05_11,60,50,85,50,95,85,70.83333333333333
 306558040,abstraction,2017_06_18__15_17_26,75,5,80,25,70,15,45
 317867760,reward_shaping,2017_06_18__17_30_01,35,5,100,5,35,90,45
+311233787,abstraction,2017_06_18__18_17_12,70,5,75,65,70,45,55
