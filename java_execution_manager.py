@@ -60,7 +60,7 @@ class JavaExecutionManager:
                     [class_files_dir_path] +
                     map(
                         lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
-                        JavaExecutionManagerConsts.DEPENDENCY_LIBS
+                        JavaExecutionManagerConsts.DEPENDENCY_FILES
                     )
                 ),
                 main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
@@ -80,7 +80,7 @@ class JavaExecutionManager:
                 dependencies=';'.join(
                     map(
                         lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
-                        JavaExecutionManagerConsts.DEPENDENCY_LIBS
+                        JavaExecutionManagerConsts.DEPENDENCY_FILES
                     )
                 ),
                 output_path=class_files_dir_path,

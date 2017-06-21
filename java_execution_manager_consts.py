@@ -8,11 +8,11 @@ class JavaExecutionManagerConsts:
 
     JDK_PATH = r'C:\Program Files\Java\jdk1.8.0_131\bin'
 
-    DEPENDENCY_LIB_PATH = r'C:\exp\jfreechart-1.0.19\jfreechart-1.0.19\lib'
+    DEPENDENCY_LIB_PATH = r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib'
 
     # custom values for each experiment type
 
-    DEPENDENCY_LIBS = [
+    DEPENDENCY_FILES = [
         'jfreechart-1.0.19.jar',
         'jcommon-1.0.23.jar'
     ]
