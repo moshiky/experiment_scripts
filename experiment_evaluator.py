@@ -188,9 +188,10 @@ class ExperimentEvaluator:
 
                 if all_copied:
                     folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
-                self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
-                # useless here, but for case that more code will be added in the loop after this point
-                continue
+                else:
+                    self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
+                    # useless here, but for case that more code will be added in the loop after this point
+                    continue
 
         self.__logger.log('create thread pool: {num_of_threads} threads'.format(
             num_of_threads=EvaluationConsts.MAX_THREADS
