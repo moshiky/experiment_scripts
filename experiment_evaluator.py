@@ -39,25 +39,48 @@ class ExperimentEvaluator:
         # for each experiment type
         for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
 
-            # modify evaluation code to run the specific experiment
-            with open(EvaluationConsts.MAIN_FILE_PATH, 'rb') as main_file:
-                main_file_content = main_file.read()
+            self.__logger.log('evaluating experiment: {experiment_type}'.format(experiment_type=experiment_type))
 
-            new_string = \
+            # modify evaluation code to run the specific experiment
+            with open(EvaluationConsts.RUN_CONFIGURATION_FILE_PATH, 'rb') as configuration_file:
+                configuration_file_content = configuration_file.read()
+
+            # build current experiment configuration string
+            current_configuration_string = \
                 EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(
                     experiment_id=EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
                 )
+
+            # search for other configurations and replace them with current experiment configuration
+            configuration_replaced = False
             for experiment_id in EvaluationConsts.EXPERIMENT_TYPE_KEYS.values():
-                experiment_id_string = \
+
+                # build experiment configuration string
+                experiment_configuration_string = \
                     EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(experiment_id=experiment_id)
-                if main_file_content.find(experiment_id_string) > -1:
-                    main_file_content = main_file_content.replace(experiment_id_string, new_string)
+
+                # replace other experiment configuration with current experiment configuration
+                if configuration_file_content.find(experiment_configuration_string) > -1:
+                    configuration_file_content = \
+                        configuration_file_content.replace(
+                            experiment_configuration_string,
+                            current_configuration_string
+                        )
+                    configuration_replaced = True
                     break
 
-            with open(EvaluationConsts.MAIN_FILE_PATH, 'wb') as main_file:
-                main_file.write(main_file_content)
+            # override old configuration file with updated content
+            if configuration_replaced:
+                with open(EvaluationConsts.RUN_CONFIGURATION_FILE_PATH, 'wb') as configuration_file:
+                    configuration_file.write(configuration_file_content)
+            else:
+                self.__logger.error('configuration not replaced. file content:\n***\n{file_content}\n***'.format(
+                    file_content=configuration_file_content
+                ))
+                # skip to next experiment type
+                continue
 
-            # for each id
+            # iterate user ids
             for user_id in user_ids:
 
                 # checkout user code
@@ -66,7 +89,7 @@ class ExperimentEvaluator:
                         user_name=user_id,
                         experiment_type=experiment_type
                     )
-                self.__logger.log('running {branch_name}'.format(branch_name=user_branch_name))
+                self.__logger.log('evaluating user branch: {branch_name}'.format(branch_name=user_branch_name))
 
                 try:
                     self.__git_handler.checkout_branch(
@@ -79,28 +102,45 @@ class ExperimentEvaluator:
                         failed_branches[user_branch_name] = EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING
                     else:
                         failed_branches[user_branch_name] = ex.message
+                    # skip to next user id
                     continue
 
                 # duplicate evaluation code
                 evaluation_with_user_code_folder_path = \
                     os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
 
+                # create combined code folder, if not exists
                 if not os.path.exists(evaluation_with_user_code_folder_path):
                     os.makedirs(evaluation_with_user_code_folder_path)
 
                 evaluation_with_user_code_folder_path = \
                     os.path.join(evaluation_with_user_code_folder_path, EvaluationConsts.SOURCE_FOLDER_NAME)
 
+                # remove old files in case already exists
+                if os.path.exists(evaluation_with_user_code_folder_path):
+                    os.remove(evaluation_with_user_code_folder_path)
+
                 try:
                     shutil.copytree(
                         EvaluationConsts.EVALUATION_SOURCE_PATH,
                         evaluation_with_user_code_folder_path
                     )
-                except WindowsError, ex:
-                    if ex.winerror != 183:
-                        raise ex
+                except Exception, ex:
+                    self.__logger.error(
+                        'failed to copy directory.'
+                        '\nsource path: {source_path}'
+                        '\ndestination path: {dest_path}'
+                        '\nerror: {ex}'.format(
+                            source_path=EvaluationConsts.EVALUATION_SOURCE_PATH,
+                            dest_path=evaluation_with_user_code_folder_path,
+                            ex=ex
+                        )
+                    )
+                    # skip to next id
+                    continue
 
                 # copy relevant experiment file
+                all_copied = True
                 for file_name_to_replace in EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type]:
 
                     source_path = \
@@ -115,16 +155,35 @@ class ExperimentEvaluator:
                             file_name_to_replace
                         )
 
-                    shutil.copy2(source_path, destination_path)
+                    try:
+                        shutil.copy2(source_path, destination_path)
+                    except Exception, ex:
+                        self.__logger.error(
+                            'failed to copy file.'
+                            '\nsource path: {source_path}'
+                            '\ndestination path: {dest_path}'
+                            '\nerror: {ex}'.format(
+                                source_path=source_path,
+                                dest_path=destination_path,
+                                ex=ex
+                            )
+                        )
+                        all_copied = False
+                        break
 
-                # compile and run code
-                try:
-                    self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
-                except Exception, ex:
-                    failed_branches[user_branch_name] = ex.message
+                if all_copied:
+                    # compile and run code
+                    try:
+                        self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
+                    except Exception, ex:
+                        failed_branches[user_branch_name] = ex.message
+                else:
+                    self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
+                    # useless here, but for case that more code will be added in the loop after this point
+                    continue
 
         self.__logger.log("failed branches:\n{failed_branches}".format(
-            failed_branches='\n'.join(key + ' = ' + failed_branches[key] for key in failed_branches.keys())
+            failed_branches='\n'.join(key + ': ' + failed_branches[key] for key in failed_branches.keys())
         ))
 
 if __name__ == '__main__':
