@@ -1,5 +1,6 @@
 
 import time
+import threading
 from experiment_consts import ExperimentConsts
 
 
@@ -14,7 +15,12 @@ class Logger:
         self.log('ERROR: {msg}'.format(msg=msg), should_print)
 
     def log(self, msg, should_print=True):
-        formatter_msg = '[{timestamp}] >> {msg}'.format(timestamp=time.strftime('%d/%m/%Y %H:%M:%S'), msg=msg)
+        current_thread = threading.current_thread()
+        formatter_msg = '[{tid}] [{timestamp}] >> {msg}'.format(
+            tid=current_thread.ident,
+            timestamp=time.strftime('%d/%m/%Y %H:%M:%S'),
+            msg=msg
+        )
         with open(self.__log_file_name, 'ab') as log_file:
             log_file.write('{msg}\n'.format(msg=formatter_msg))
 

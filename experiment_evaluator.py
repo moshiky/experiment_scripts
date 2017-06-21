@@ -1,6 +1,7 @@
 
 import os
 import shutil
+from multiprocessing.dummy import Pool as ThreadPool
 from logger import Logger
 from git_handler import GitHandler
 from experiment_consts import ExperimentConsts
@@ -13,7 +14,18 @@ class ExperimentEvaluator:
     def __init__(self):
         self.__logger = Logger()
         self.__git_handler = GitHandler(self.__logger)
-        self.__java_execution_manager = JavaExecutionManager(self.__logger)
+        self.__failed_branches = dict()
+
+    def __evaluate_code_folder(self, folder_path):
+        self.__logger.log('evaluating folder: {folder_path}'.format(folder_path=folder_path))
+        # compile and run code
+        java_execution_manager = JavaExecutionManager(self.__logger)
+        try:
+            java_execution_manager.run_code(folder_path)
+            self.__logger.log('folder evaluated successfully')
+        except Exception, ex:
+            self.__logger.log('folder evaluation failed')
+            self.__failed_branches[folder_path] = ex.message
 
     def generate_results(self):
 
@@ -34,12 +46,15 @@ class ExperimentEvaluator:
         )
 
         # dictionary that contains all the problematic branches
-        failed_branches = dict()
+        self.__failed_branches = dict()
+
+        # list of folder paths of branches that are ready for evaluation
+        folder_paths_to_evaluate = list()
 
         # for each experiment type
         for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
 
-            self.__logger.log('evaluating experiment: {experiment_type}'.format(experiment_type=experiment_type))
+            self.__logger.log('preparing experiment: {experiment_type}'.format(experiment_type=experiment_type))
 
             # modify evaluation code to run the specific experiment
             with open(EvaluationConsts.RUN_CONFIGURATION_FILE_PATH, 'rb') as configuration_file:
@@ -89,7 +104,7 @@ class ExperimentEvaluator:
                         user_name=user_id,
                         experiment_type=experiment_type
                     )
-                self.__logger.log('evaluating user branch: {branch_name}'.format(branch_name=user_branch_name))
+                self.__logger.log('preparing user branch: {branch_name}'.format(branch_name=user_branch_name))
 
                 try:
                     self.__git_handler.checkout_branch(
@@ -99,9 +114,9 @@ class ExperimentEvaluator:
                 except Exception, ex:
                     if ex.message.find(EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING) > -1:
                         self.__logger.error('branch not found: {branch_name}'.format(branch_name=user_branch_name))
-                        failed_branches[user_branch_name] = EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING
+                        self.__failed_branches[user_branch_name] = EvaluationConsts.BRANCH_NOT_FOUND_EXCEPTION_STRING
                     else:
-                        failed_branches[user_branch_name] = ex.message
+                        self.__failed_branches[user_branch_name] = ex.message
                     # skip to next user id
                     continue
 
@@ -172,18 +187,26 @@ class ExperimentEvaluator:
                         break
 
                 if all_copied:
-                    # compile and run code
-                    try:
-                        self.__java_execution_manager.run_code(evaluation_with_user_code_folder_path)
-                    except Exception, ex:
-                        failed_branches[user_branch_name] = ex.message
-                else:
-                    self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
-                    # useless here, but for case that more code will be added in the loop after this point
-                    continue
+                    folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
+                self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
+                # useless here, but for case that more code will be added in the loop after this point
+                continue
+
+        self.__logger.log('create thread pool: {num_of_threads} threads'.format(
+            num_of_threads=EvaluationConsts.MAX_THREADS
+        ))
+        thread_pool = ThreadPool(EvaluationConsts.MAX_THREADS)
+
+        self.__logger.log('begin threads run')
+        thread_pool.map(self.__evaluate_code_folder, folder_paths_to_evaluate)
+        thread_pool.close()
+
+        self.__logger.log('wait for all threads to finish')
+        thread_pool.join()
+        self.__logger.log('all folders evaluated')
 
         self.__logger.log("failed branches:\n{failed_branches}".format(
-            failed_branches='\n'.join(key + ': ' + failed_branches[key] for key in failed_branches.keys())
+            failed_branches='\n'.join(key + ': ' + self.__failed_branches[key] for key in self.__failed_branches.keys())
         ))
 
 if __name__ == '__main__':
