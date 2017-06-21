@@ -18,7 +18,7 @@ class JavaExecutionManager:
 
         class_files_dir_path = \
             os.path.join(
-                JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
+                JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
                 user_id,
                 run_type,
                 'compiled_code'
@@ -31,7 +31,7 @@ class JavaExecutionManager:
 
         logs_dir_path = \
             os.path.join(
-                JavaExecutionManagerConsts.CLASS_FILES_DIR_PATH_BASE,
+                JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
                 user_id,
                 run_type,
                 'logs'

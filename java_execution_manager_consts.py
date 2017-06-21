@@ -26,7 +26,9 @@ class JavaExecutionManagerConsts:
 
     # constants
 
-    CLASS_FILES_DIR_PATH_BASE = os.path.join(os.path.dirname(__file__), '..', 'evaluation_results')
+    DOMAIN_NAME = 'predator'
+
+    OUTPUT_DIR_PATH = os.path.join(os.path.dirname(__file__), '..', 'evaluation_results', DOMAIN_NAME)
 
     COMPILER_FILE_NAME = r'javac.exe'
 
