@@ -42,10 +42,6 @@ class EvaluationConsts:
         ],
         'similarities': [
             os.path.join('src', 'main', 'java', 'problem', 'predator', 'SimilarityManager.java')
-        ],
-        'similarities_on_reward_shaping': [
-            os.path.join('src', 'main', 'java', 'problem', 'predator', 'ShapingManager.java'),
-            os.path.join('src', 'main', 'java', 'problem', 'predator', 'SimilarityManager.java')
         ]
     }
 

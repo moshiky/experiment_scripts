@@ -151,6 +151,13 @@ class ExperimentEvaluator:
                             ex=ex
                         )
                     )
+
+                    # remove remains, if any
+                    user_branch_folder_path = \
+                        os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
+                    if os.path.exists(user_branch_folder_path):
+                        os.remove(user_branch_folder_path)
+
                     # skip to next id
                     continue
 
@@ -190,8 +197,57 @@ class ExperimentEvaluator:
                     folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
                 else:
                     self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
+
+                    # remove remains, if any
+                    user_branch_folder_path = \
+                        os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
+                    if os.path.exists(user_branch_folder_path):
+                        os.remove(user_branch_folder_path)
+
                     # useless here, but for case that more code will be added in the loop after this point
                     continue
+
+        # create Similarities on Reward Shaping folders
+        for user_id in user_ids:
+            self.__logger.log('preparing user {user_id} similarities_on_reward_shaping folder'.format(user_id=user_id))
+
+            # create source folder paths
+            reward_shaping_branch_name = \
+                ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
+                    user_name=user_id,
+                    experiment_type='reward_shaping'
+                )
+
+            similarities_branch_name = \
+                ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
+                    user_name=user_id,
+                    experiment_type='similarities'
+                )
+
+            reward_shaping_folder_path = \
+                os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, reward_shaping_branch_name)
+
+            similarities_folder_path = \
+                os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, similarities_branch_name)
+
+            # verify both folders exists
+            should_skip = False
+            if not os.path.exists(reward_shaping_folder_path):
+                self.__logger.error('reward_shaping folder is missing')
+                should_skip = True
+            if not os.path.exists(similarities_folder_path):
+                self.__logger.error('similarities folder is missing')
+                should_skip = True
+            if should_skip:
+                self.__logger.log('skipping to next user id')
+                continue
+
+            # duplicate reward shaping folder
+            
+
+            # copy similarities file from similarities branch to duplicated folder
+            # modify configuration to run SimilaritiesOnRewardShaping
+            # add folder path to folder_paths_to_evaluate
 
         self.__logger.log('create thread pool: {num_of_threads} threads'.format(
             num_of_threads=EvaluationConsts.MAX_THREADS
