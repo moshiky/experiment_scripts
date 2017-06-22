@@ -14,8 +14,8 @@ class EvaluationConsts:
     USER_SOURCE_PATH = os.path.join(EVALUATION_SOURCE_BASE_PATH, 'user', SOURCE_FOLDER_NAME)
 
     # should config!
-    RUN_CONFIGURATION_FILE_PATH = \
-        os.path.join(EVALUATION_SOURCE_PATH, 'src', 'main', 'java', 'problem', 'predator', 'Experiments.java')
+    RUN_CONFIGURATION_FILE_TEMPLATE = \
+        os.path.join('{folder_path}', 'src', 'main', 'java', 'problem', 'predator', 'Experiments.java')
 
     # should config!
     EXPERIMENT_CONFIGURATION_BASE_STRING = 'int[]{{{experiment_id}}}'
@@ -28,9 +28,9 @@ class EvaluationConsts:
     EXPERIMENT_TYPE_KEYS = {
         'abstraction': 8,
         'reward_shaping': 11,
-        'similarities': 10,
-        'similarities_on_reward_shaping': 13
+        'similarities': 10
     }
+    SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY = 13
 
     # should config!
     EXPERIMENT_REPLACE_FILES = {

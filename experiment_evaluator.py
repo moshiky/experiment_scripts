@@ -27,6 +27,98 @@ class ExperimentEvaluator:
             self.__logger.log('folder evaluation failed')
             self.__failed_branches[folder_path] = ex.message
 
+    def __duplicate_directory(self, source_path, destination_path):
+        try:
+            shutil.copytree(source_path, destination_path)
+
+            return True
+
+        except Exception, ex:
+            self.__logger.error(
+                'failed to copy directory.'
+                '\nsource path: {source_path}'
+                '\ndestination path: {destination_path}'
+                '\nerror: {ex}'.format(source_path=source_path, destination_path=destination_path, ex=ex)
+            )
+
+            return False
+
+    def __copy_file(self, source_path, destination_path):
+        try:
+            shutil.copy2(source_path, destination_path)
+
+            return True
+
+        except Exception, ex:
+            self.__logger.error(
+                'failed to copy file.'
+                '\nsource path: {source_path}'
+                '\ndestination path: {dest_path}'
+                '\nerror: {ex}'.format(
+                    source_path=source_path,
+                    dest_path=destination_path,
+                    ex=ex
+                )
+            )
+
+            return False
+
+    def __copy_user_experiment_files(self, experiment_type, source_folder_path, destination_folder_path):
+
+        for file_name_to_replace in EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type]:
+
+            source_file_path = os.path.join(source_folder_path, file_name_to_replace)
+            destination_file_path = os.path.join(destination_folder_path, file_name_to_replace)
+
+            if not self.__copy_file(source_file_path, destination_file_path):
+                return False
+
+        return True
+
+    def __change_configuration(self, source_folder_path, new_configuration_key):
+        # modify evaluation code to run the specific experiment
+        run_configuration_file_path = \
+            EvaluationConsts.RUN_CONFIGURATION_FILE_TEMPLATE.format(
+                folder_path=source_folder_path
+            )
+        with open(run_configuration_file_path, 'rb') as configuration_file:
+            configuration_file_content = configuration_file.read()
+
+        # build current experiment configuration string
+        current_configuration_string = \
+            EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(
+                experiment_id=new_configuration_key
+            )
+
+        # search for other configurations and replace them with current experiment configuration
+        configuration_replaced = False
+        for experiment_id in EvaluationConsts.EXPERIMENT_TYPE_KEYS.values():
+
+            # build experiment configuration string
+            experiment_configuration_string = \
+                EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(experiment_id=experiment_id)
+
+            # replace other experiment configuration with current experiment configuration
+            if configuration_file_content.find(experiment_configuration_string) > -1:
+                configuration_file_content = \
+                    configuration_file_content.replace(
+                        experiment_configuration_string,
+                        current_configuration_string
+                    )
+                configuration_replaced = True
+                break
+
+        # override old configuration file with updated content
+        if configuration_replaced:
+            with open(run_configuration_file_path, 'wb') as configuration_file:
+                configuration_file.write(configuration_file_content)
+        else:
+            self.__logger.error('configuration not replaced. file content:\n***\n{file_content}\n***'.format(
+                file_content=configuration_file_content
+            ))
+
+        return configuration_replaced
+
     def generate_results(self):
 
         self.__logger.log("begin result generation")
@@ -56,42 +148,9 @@ class ExperimentEvaluator:
 
             self.__logger.log('preparing experiment: {experiment_type}'.format(experiment_type=experiment_type))
 
-            # modify evaluation code to run the specific experiment
-            with open(EvaluationConsts.RUN_CONFIGURATION_FILE_PATH, 'rb') as configuration_file:
-                configuration_file_content = configuration_file.read()
-
-            # build current experiment configuration string
-            current_configuration_string = \
-                EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(
-                    experiment_id=EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
-                )
-
-            # search for other configurations and replace them with current experiment configuration
-            configuration_replaced = False
-            for experiment_id in EvaluationConsts.EXPERIMENT_TYPE_KEYS.values():
-
-                # build experiment configuration string
-                experiment_configuration_string = \
-                    EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(experiment_id=experiment_id)
-
-                # replace other experiment configuration with current experiment configuration
-                if configuration_file_content.find(experiment_configuration_string) > -1:
-                    configuration_file_content = \
-                        configuration_file_content.replace(
-                            experiment_configuration_string,
-                            current_configuration_string
-                        )
-                    configuration_replaced = True
-                    break
-
-            # override old configuration file with updated content
-            if configuration_replaced:
-                with open(EvaluationConsts.RUN_CONFIGURATION_FILE_PATH, 'wb') as configuration_file:
-                    configuration_file.write(configuration_file_content)
-            else:
-                self.__logger.error('configuration not replaced. file content:\n***\n{file_content}\n***'.format(
-                    file_content=configuration_file_content
-                ))
+            if not self.__change_configuration(
+                    EvaluationConsts.EVALUATION_SOURCE_PATH, EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
+            ):
                 # skip to next experiment type
                 continue
 
@@ -135,23 +194,9 @@ class ExperimentEvaluator:
                 if os.path.exists(evaluation_with_user_code_folder_path):
                     os.remove(evaluation_with_user_code_folder_path)
 
-                try:
-                    shutil.copytree(
-                        EvaluationConsts.EVALUATION_SOURCE_PATH,
-                        evaluation_with_user_code_folder_path
-                    )
-                except Exception, ex:
-                    self.__logger.error(
-                        'failed to copy directory.'
-                        '\nsource path: {source_path}'
-                        '\ndestination path: {dest_path}'
-                        '\nerror: {ex}'.format(
-                            source_path=EvaluationConsts.EVALUATION_SOURCE_PATH,
-                            dest_path=evaluation_with_user_code_folder_path,
-                            ex=ex
-                        )
-                    )
-
+                if not self.__duplicate_directory(
+                        EvaluationConsts.EVALUATION_SOURCE_PATH, evaluation_with_user_code_folder_path
+                ):
                     # remove remains, if any
                     user_branch_folder_path = \
                         os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
@@ -162,38 +207,9 @@ class ExperimentEvaluator:
                     continue
 
                 # copy relevant experiment file
-                all_copied = True
-                for file_name_to_replace in EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type]:
-
-                    source_path = \
-                        os.path.join(
-                            EvaluationConsts.USER_SOURCE_PATH,
-                            file_name_to_replace
-                        )
-
-                    destination_path = \
-                        os.path.join(
-                            evaluation_with_user_code_folder_path,
-                            file_name_to_replace
-                        )
-
-                    try:
-                        shutil.copy2(source_path, destination_path)
-                    except Exception, ex:
-                        self.__logger.error(
-                            'failed to copy file.'
-                            '\nsource path: {source_path}'
-                            '\ndestination path: {dest_path}'
-                            '\nerror: {ex}'.format(
-                                source_path=source_path,
-                                dest_path=destination_path,
-                                ex=ex
-                            )
-                        )
-                        all_copied = False
-                        break
-
-                if all_copied:
+                if not self.__copy_user_experiment_files(
+                        experiment_type, EvaluationConsts.USER_SOURCE_PATH, evaluation_with_user_code_folder_path
+                ):
                     folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
                 else:
                     self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
@@ -212,16 +228,19 @@ class ExperimentEvaluator:
             self.__logger.log('preparing user {user_id} similarities_on_reward_shaping folder'.format(user_id=user_id))
 
             # create source folder paths
+            reward_shaping_experiment_type_name = 'reward_shaping'
+            similarities_experiment_type_name = 'similarities'
+
             reward_shaping_branch_name = \
                 ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
                     user_name=user_id,
-                    experiment_type='reward_shaping'
+                    experiment_type=reward_shaping_experiment_type_name
                 )
 
             similarities_branch_name = \
                 ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
                     user_name=user_id,
-                    experiment_type='similarities'
+                    experiment_type=similarities_experiment_type_name
                 )
 
             reward_shaping_folder_path = \
@@ -229,6 +248,19 @@ class ExperimentEvaluator:
 
             similarities_folder_path = \
                 os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, similarities_branch_name)
+
+            similarities_on_reward_shaping_folder_path = \
+                os.path.join(
+                    EvaluationConsts.EVALUATION_SOURCE_BASE_PATH,
+                    ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
+                        user_name=user_id,
+                        experiment_type=
+                        '{similarities_experiment_type_name}_on_{reward_shaping_experiment_type_name}'.format(
+                            similarities_experiment_type_name=similarities_experiment_type_name,
+                            reward_shaping_experiment_type_name=reward_shaping_experiment_type_name
+                        )
+                    )
+                )
 
             # verify both folders exists
             should_skip = False
@@ -242,12 +274,36 @@ class ExperimentEvaluator:
                 self.__logger.log('skipping to next user id')
                 continue
 
-            # duplicate reward shaping folder
-            
+            try:
+                # duplicate reward shaping folder
+                if not self.__duplicate_directory(reward_shaping_folder_path, similarities_on_reward_shaping_folder_path):
+                    self.__logger.log('skipping to next user id')
+                    raise Exception('failed duplicating reward shaping folder')
 
-            # copy similarities file from similarities branch to duplicated folder
-            # modify configuration to run SimilaritiesOnRewardShaping
+                # copy similarities file from similarities branch to duplicated folder
+                if not self.__copy_user_experiment_files(
+                        similarities_experiment_type_name,
+                        similarities_folder_path,
+                        similarities_on_reward_shaping_folder_path
+                ):
+                    raise Exception('failed coping similarities files')
+
+                # modify configuration to run SimilaritiesOnRewardShaping
+                if not self.__change_configuration(
+                        similarities_on_reward_shaping_folder_path,
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY
+                ):
+                    raise Exception('failed changing configuration')
+
+            except Exception, ex:
+                self.__logger.error('failed crating folder. exception: {ex}'.format(ex=ex))
+                if os.path.exists(similarities_on_reward_shaping_folder_path):
+                    os.remove(similarities_on_reward_shaping_folder_path)
+                self.__logger.log('skipping to next user id')
+                continue
+
             # add folder path to folder_paths_to_evaluate
+            folder_paths_to_evaluate.append(similarities_on_reward_shaping_folder_path)
 
         self.__logger.log('create thread pool: {num_of_threads} threads'.format(
             num_of_threads=EvaluationConsts.MAX_THREADS
