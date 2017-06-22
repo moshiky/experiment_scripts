@@ -250,7 +250,11 @@ class ExperimentEvaluator:
                 os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, reward_shaping_branch_name)
 
             similarities_folder_path = \
-                os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, similarities_branch_name)
+                os.path.join(
+                    EvaluationConsts.EVALUATION_SOURCE_BASE_PATH,
+                    similarities_branch_name,
+                    EvaluationConsts.SOURCE_FOLDER_NAME
+                )
 
             similarities_on_reward_shaping_folder_path = \
                 os.path.join(
