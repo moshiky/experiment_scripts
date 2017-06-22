@@ -287,17 +287,21 @@ class ExperimentEvaluator:
                     self.__logger.log('skipping to next user id')
                     raise Exception('failed duplicating reward shaping folder')
 
+                # append source folder name
+                similarities_on_reward_shaping_folder_path_with_folder_name = \
+                    os.path.join(similarities_on_reward_shaping_folder_path, EvaluationConsts.SOURCE_FOLDER_NAME)
+
                 # copy similarities file from similarities branch to duplicated folder
                 if not self.__copy_user_experiment_files(
                         similarities_experiment_type_name,
                         similarities_folder_path,
-                        similarities_on_reward_shaping_folder_path
+                        similarities_on_reward_shaping_folder_path_with_folder_name
                 ):
                     raise Exception('failed coping similarities files')
 
                 # modify configuration to run SimilaritiesOnRewardShaping
                 if not self.__change_configuration(
-                        similarities_on_reward_shaping_folder_path,
+                        similarities_on_reward_shaping_folder_path_with_folder_name,
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY
                 ):
                     raise Exception('failed changing configuration')
@@ -310,7 +314,7 @@ class ExperimentEvaluator:
                 continue
 
             # add folder path to folder_paths_to_evaluate
-            folder_paths_to_evaluate.append(similarities_on_reward_shaping_folder_path)
+            folder_paths_to_evaluate.append(similarities_on_reward_shaping_folder_path_with_folder_name)
 
         self.__logger.log('create thread pool: {num_of_threads} threads'.format(
             num_of_threads=EvaluationConsts.MAX_THREADS
