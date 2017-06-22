@@ -46,8 +46,9 @@ class ExperimentEvaluator:
     def __copy_file(self, source_path, destination_path):
         try:
             shutil.copy2(source_path, destination_path)
-
-            return True
+            self.__logger.log('file copied successfully: {source_path} => {destination_path}'.format(
+                source_path=source_path, destination_path=destination_path
+            ), should_print=False)
 
         except Exception, ex:
             self.__logger.error(
@@ -62,6 +63,8 @@ class ExperimentEvaluator:
             )
 
             return False
+
+        return True
 
     def __copy_user_experiment_files(self, experiment_type, source_folder_path, destination_folder_path):
 
@@ -207,7 +210,7 @@ class ExperimentEvaluator:
                     continue
 
                 # copy relevant experiment file
-                if not self.__copy_user_experiment_files(
+                if self.__copy_user_experiment_files(
                         experiment_type, EvaluationConsts.USER_SOURCE_PATH, evaluation_with_user_code_folder_path
                 ):
                     folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
