@@ -352,7 +352,7 @@ class ExperimentEvaluator:
 
             for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
 
-                raw_info_dict[uid] = list()
+                raw_info_dict[uid][experiment_type] = dict()
 
                 # build user results folder path
                 user_folder_name = \
@@ -389,12 +389,62 @@ class ExperimentEvaluator:
                 # remove header
                 log_file_lines = log_file_lines[4:]
 
+                # experiment round id
+                experiment_round_id = -1
+                last_ep_id = -1
+
                 # parse lines
-                for line in log_file_lines:
+                try:
+                    for line in log_file_lines:
 
-                    if line[0] == '['
+                        if line[0] == '[' and line[20] == ']':  # regular log line
+                            line_parts = line.split(' >> ')
+                            line_time = line_parts[0]
+                            line_content = line_parts[1]
 
+                            if line_content in [
+                                'Logger created',
+                                'Abstraction',
+                                'Similarities',
+                                'RewardShaping',
+                                'SimilaritiesOnRewardShaping'
+                            ]:
+                                # line not important and could be ignored
+                                continue
 
+                            elif line_content.startswith('=== Experiment #'):
+                                # line declares that new experiment round is started
+                                experiment_round_id = (line_content.split('#')[1]).split(' ')[0]
+                                raw_info_dict[uid][experiment_type][experiment_round_id] = list()
+                                last_ep_id = -1
+
+                            elif line_content.startswith('ex') and line_content.find('ep') > 0 \
+                                    and line_content.find('mean:') > 0:
+
+                                ex_id = line_content[2:].split('ep')[0]
+                                if str(ex_id) != str(experiment_round_id):
+                                    raise Exception(
+                                        'wrong log file format. ex id mismatch: '
+                                        'declared {experiment_round_id} but line contains {ex_id}'.format(
+                                            experiment_round_id=experiment_round_id, ex_id=ex_id
+                                        )
+                                    )
+
+                                ep_id = (line_content.split('ep')[1]).split(' ')[0]
+                                if last_ep_id + 100 != ep_id:
+                                    raise Exception(
+                                        'wrong log file format. eps not ordered correctly: '
+                                        'last is {last_ep_id} but current is {ep_id}'.format(
+                                            last_ep_id=last_ep_id, ep_id=ep_id
+                                        )
+                                    )
+
+                                mean_score = line_content.split(' ')[2]
+                                raw_info_dict[uid][experiment_type].append(mean_score)
+
+                except Exception, ex:
+                    self.__logger.error('log file parsing failed. ex={ex}'.format(ex=ex))
+                    continue
 
 
 if __name__ == '__main__':
