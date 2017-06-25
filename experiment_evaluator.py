@@ -392,6 +392,7 @@ class ExperimentEvaluator:
                 # experiment round id
                 experiment_round_id = -1
                 last_ep_id = -1
+                logging_stage = None
 
                 # parse lines
                 try:
@@ -415,11 +416,17 @@ class ExperimentEvaluator:
                             elif line_content.startswith('=== Experiment #'):
                                 # line declares that new experiment round is started
                                 experiment_round_id = (line_content.split('#')[1]).split(' ')[0]
-                                raw_info_dict[uid][experiment_type][experiment_round_id] = list()
+                                raw_info_dict[uid][experiment_type][experiment_round_id] = \
+                                    {
+                                        'train': list(),
+                                        'eval': list()
+                                    }
                                 last_ep_id = -1
+                                logging_stage = 'train'
 
                             elif line_content.startswith('ex') and line_content.find('ep') > 0 \
                                     and line_content.find('mean:') > 0:
+                                # train score log line
 
                                 ex_id = line_content[2:].split('ep')[0]
                                 if str(ex_id) != str(experiment_round_id):
@@ -431,16 +438,46 @@ class ExperimentEvaluator:
                                     )
 
                                 ep_id = (line_content.split('ep')[1]).split(' ')[0]
-                                if last_ep_id + 100 != ep_id:
+                                if int(last_ep_id) + 100 != int(ep_id):
                                     raise Exception(
                                         'wrong log file format. eps not ordered correctly: '
                                         'last is {last_ep_id} but current is {ep_id}'.format(
                                             last_ep_id=last_ep_id, ep_id=ep_id
                                         )
                                     )
+                                last_ep_id = ep_id
 
                                 mean_score = line_content.split(' ')[2]
-                                raw_info_dict[uid][experiment_type].append(mean_score)
+                                raw_info_dict[uid][experiment_type][ex_id][logging_stage].append(mean_score)
+
+                            elif line_content.startswith('ex') and line_content.find('eval_ep') > 0:
+                                # evaluation session score log line
+
+                                ex_id = line_content[2:].split('eval')[0]
+                                if str(ex_id) != str(experiment_round_id):
+                                    raise Exception(
+                                        'wrong log file format. eval ex id mismatch: '
+                                        'declared {experiment_round_id} but line contains {ex_id}'.format(
+                                            experiment_round_id=experiment_round_id, ex_id=ex_id
+                                        )
+                                    )
+
+                                ep_id = (line_content.split('eval_ep')[1]).split(' ')[0].replace(':', '')
+                                if str(ep_id) == '0':
+                                    logging_stage = 'eval'
+                                    last_ep_id = -1
+
+                                if int(last_ep_id) + 1 != int(ep_id):
+                                    raise Exception(
+                                        'wrong log file format. eval eps not ordered correctly: '
+                                        'last is {last_ep_id} but current is {ep_id}'.format(
+                                            last_ep_id=last_ep_id, ep_id=ep_id
+                                        )
+                                    )
+                                last_ep_id = ep_id
+
+                                mean_score = line_content.split(' ')[1]
+                                raw_info_dict[uid][experiment_type][ex_id][logging_stage].append(mean_score)
 
                 except Exception, ex:
                     self.__logger.error('log file parsing failed. ex={ex}'.format(ex=ex))
