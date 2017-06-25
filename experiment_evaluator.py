@@ -1,6 +1,7 @@
 
 import os
 import shutil
+import math
 from multiprocessing.dummy import Pool as ThreadPool
 from logger import Logger
 from git_handler import GitHandler
@@ -334,6 +335,123 @@ class ExperimentEvaluator:
             failed_branches='\n'.join(key + ': ' + self.__failed_branches[key] for key in self.__failed_branches.keys())
         ))
 
+    def __parse_all_lines(self, log_lines):
+        # create result dict
+        result_dict = dict()
+
+        # experiment round id
+        experiment_round_id = -1
+        last_ep_id = -1
+        logging_stage = None
+
+        # parse lines
+        for line in log_lines:
+
+            if line[0] == '[' and line[20] == ']':  # regular log line
+                line_parts = line.split(' >> ')
+                line_time = line_parts[0]
+                line_content = line_parts[1]
+
+                if line_content in [
+                    'Logger created',
+                    'Abstraction',
+                    'Similarities',
+                    'RewardShaping',
+                    'SimilaritiesOnRewardShaping'
+                ]:
+                    # line not important and could be ignored
+                    continue
+
+                elif line_content.startswith('=== Experiment #'):
+                    # line declares that new experiment round is started
+                    experiment_round_id = (line_content.split('#')[1]).split(' ')[0]
+                    result_dict[experiment_round_id] = \
+                        {
+                            'train': list(),
+                            'eval': list()
+                        }
+                    last_ep_id = -1
+                    logging_stage = 'train'
+
+                elif line_content.startswith('ex') and line_content.find('ep') > 0 \
+                        and line_content.find('mean:') > 0:
+                    # train score log line
+
+                    ex_id = line_content[2:].split('ep')[0]
+                    if str(ex_id) != str(experiment_round_id):
+                        raise Exception(
+                            'wrong log file format. ex id mismatch: '
+                            'declared {experiment_round_id} but line contains {ex_id}'.format(
+                                experiment_round_id=experiment_round_id, ex_id=ex_id
+                            )
+                        )
+
+                    ep_id = (line_content.split('ep')[1]).split(' ')[0]
+                    if int(last_ep_id) + 100 != int(ep_id):
+                        raise Exception(
+                            'wrong log file format. eps not ordered correctly: '
+                            'last is {last_ep_id} but current is {ep_id}'.format(
+                                last_ep_id=last_ep_id, ep_id=ep_id
+                            )
+                        )
+                    last_ep_id = ep_id
+
+                    mean_score = line_content.split(' ')[2]
+                    result_dict[logging_stage].append(mean_score)
+
+                elif line_content.startswith('ex') and line_content.find('eval_ep') > 0:
+                    # evaluation session score log line
+
+                    ex_id = line_content[2:].split('eval')[0]
+                    if str(ex_id) != str(experiment_round_id):
+                        raise Exception(
+                            'wrong log file format. eval ex id mismatch: '
+                            'declared {experiment_round_id} but line contains {ex_id}'.format(
+                                experiment_round_id=experiment_round_id, ex_id=ex_id
+                            )
+                        )
+
+                    ep_id = (line_content.split('eval_ep')[1]).split(' ')[0].replace(':', '')
+                    if str(ep_id) == '0':
+                        logging_stage = 'eval'
+                        last_ep_id = -1
+
+                    if int(last_ep_id) + 1 != int(ep_id):
+                        raise Exception(
+                            'wrong log file format. eval eps not ordered correctly: '
+                            'last is {last_ep_id} but current is {ep_id}'.format(
+                                last_ep_id=last_ep_id, ep_id=ep_id
+                            )
+                        )
+                    last_ep_id = ep_id
+
+                    mean_score = line_content.split(' ')[1]
+                    result_dict[ex_id][logging_stage].append(mean_score)
+
+        return result_dict
+
+    def __parse_selected_lines(self, log_lines):
+        # create result lists
+        eval_results = list()
+        train_episodes_means = None
+
+        # iterate log lines and parse lines
+        for line in log_lines:
+
+            if line.find('ex_eval_mean:') > 0:  # regular log line
+                eval_results.append(float(line.split('ex_eval_mean:')[1]))
+
+            elif line.find('Train episodes mean:') > 0:
+                if train_episodes_means is not None:
+                    raise Exception('duplicated train episodes list')
+
+                line_part = line.split('Train episodes mean:')[1:][0]
+                list_text = line_part.replace('[', '').replace(']', '')
+                train_episodes_means = list_text.split(', ')
+                train_episodes_means = map(float, train_episodes_means)
+
+        return {'eval': sum(eval_results) / len(eval_results), 'train': train_episodes_means}
+
     def generate_users_score(self):
         self.__logger.log("begin score generation")
 
@@ -345,29 +463,28 @@ class ExperimentEvaluator:
             user_ids = user_ids[:-1]
         self.__logger.log("running {num_ids} ids:\n{ids}".format(num_ids=len(user_ids), ids='\n'.join(user_ids)))
 
+        exp_list = list(EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys())
+        exp_list.append('similarities_on_reward_shaping')
+
         raw_info_dict = dict()
         for uid in user_ids:
 
             raw_info_dict[uid] = dict()
 
-            for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
+            for experiment_type in exp_list:
 
                 raw_info_dict[uid][experiment_type] = dict()
 
                 # build user results folder path
-                user_folder_name = \
-                    ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
-                        user_name=uid, experiment_type=experiment_type
-                    )
-
                 self.__logger.log(
-                    'calculating score of {uid_and_experiment_type}'.format(uid_and_experiment_type=user_folder_name)
+                    'calculating score of {uid} at {experiment_type}'.format(uid=uid, experiment_type=experiment_type)
                 )
 
                 user_log_dir_path = \
                     os.path.join(
                         JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
-                        user_folder_name,
+                        uid,
+                        experiment_type,
                         JavaExecutionManagerConsts.EXECUTION_LOGS_FOLDER_NAME
                     )
                 logs_dir_files = os.listdir(user_log_dir_path)
@@ -389,101 +506,17 @@ class ExperimentEvaluator:
                 # remove header
                 log_file_lines = log_file_lines[4:]
 
-                # experiment round id
-                experiment_round_id = -1
-                last_ep_id = -1
-                logging_stage = None
-
-                # parse lines
                 try:
-                    for line in log_file_lines:
-
-                        if line[0] == '[' and line[20] == ']':  # regular log line
-                            line_parts = line.split(' >> ')
-                            line_time = line_parts[0]
-                            line_content = line_parts[1]
-
-                            if line_content in [
-                                'Logger created',
-                                'Abstraction',
-                                'Similarities',
-                                'RewardShaping',
-                                'SimilaritiesOnRewardShaping'
-                            ]:
-                                # line not important and could be ignored
-                                continue
-
-                            elif line_content.startswith('=== Experiment #'):
-                                # line declares that new experiment round is started
-                                experiment_round_id = (line_content.split('#')[1]).split(' ')[0]
-                                raw_info_dict[uid][experiment_type][experiment_round_id] = \
-                                    {
-                                        'train': list(),
-                                        'eval': list()
-                                    }
-                                last_ep_id = -1
-                                logging_stage = 'train'
-
-                            elif line_content.startswith('ex') and line_content.find('ep') > 0 \
-                                    and line_content.find('mean:') > 0:
-                                # train score log line
-
-                                ex_id = line_content[2:].split('ep')[0]
-                                if str(ex_id) != str(experiment_round_id):
-                                    raise Exception(
-                                        'wrong log file format. ex id mismatch: '
-                                        'declared {experiment_round_id} but line contains {ex_id}'.format(
-                                            experiment_round_id=experiment_round_id, ex_id=ex_id
-                                        )
-                                    )
-
-                                ep_id = (line_content.split('ep')[1]).split(' ')[0]
-                                if int(last_ep_id) + 100 != int(ep_id):
-                                    raise Exception(
-                                        'wrong log file format. eps not ordered correctly: '
-                                        'last is {last_ep_id} but current is {ep_id}'.format(
-                                            last_ep_id=last_ep_id, ep_id=ep_id
-                                        )
-                                    )
-                                last_ep_id = ep_id
-
-                                mean_score = line_content.split(' ')[2]
-                                raw_info_dict[uid][experiment_type][ex_id][logging_stage].append(mean_score)
-
-                            elif line_content.startswith('ex') and line_content.find('eval_ep') > 0:
-                                # evaluation session score log line
-
-                                ex_id = line_content[2:].split('eval')[0]
-                                if str(ex_id) != str(experiment_round_id):
-                                    raise Exception(
-                                        'wrong log file format. eval ex id mismatch: '
-                                        'declared {experiment_round_id} but line contains {ex_id}'.format(
-                                            experiment_round_id=experiment_round_id, ex_id=ex_id
-                                        )
-                                    )
-
-                                ep_id = (line_content.split('eval_ep')[1]).split(' ')[0].replace(':', '')
-                                if str(ep_id) == '0':
-                                    logging_stage = 'eval'
-                                    last_ep_id = -1
-
-                                if int(last_ep_id) + 1 != int(ep_id):
-                                    raise Exception(
-                                        'wrong log file format. eval eps not ordered correctly: '
-                                        'last is {last_ep_id} but current is {ep_id}'.format(
-                                            last_ep_id=last_ep_id, ep_id=ep_id
-                                        )
-                                    )
-                                last_ep_id = ep_id
-
-                                mean_score = line_content.split(' ')[1]
-                                raw_info_dict[uid][experiment_type][ex_id][logging_stage].append(mean_score)
+                    # raw_info_dict[uid][experiment_type] = self.__parse_all_lines(log_file_lines)
+                    raw_info_dict[uid][experiment_type] = self.__parse_selected_lines(log_file_lines)
 
                 except Exception, ex:
                     self.__logger.error('log file parsing failed. ex={ex}'.format(ex=ex))
-                    continue
+                    return None
+
 
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
-    experiment_evaluator.generate_results()
+    # experiment_evaluator.generate_results()
+    experiment_evaluator.generate_users_score()
