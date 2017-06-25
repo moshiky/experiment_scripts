@@ -514,6 +514,86 @@ class ExperimentEvaluator:
                     self.__logger.error('log file parsing failed. ex={ex}'.format(ex=ex))
                     return None
 
+        # find global info
+        lower_eval_res = dict()  # lower = better
+        higher_eval_res = dict()  # higher = worth
+
+        for experiment_type in exp_list:
+
+            tmp_lower = None
+            tmp_higher = None
+
+            for uid in user_ids:
+
+                if tmp_lower is None:
+                    tmp_lower = tmp_higher = raw_info_dict[uid][experiment_type]['eval']
+
+                else:
+                    user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+
+                    if tmp_lower > user_eval_result:
+                        tmp_lower = user_eval_result
+
+                    elif tmp_higher < user_eval_result:
+                        tmp_higher = user_eval_result
+
+            lower_eval_res[experiment_type] = tmp_lower
+            higher_eval_res[experiment_type] = tmp_higher
+
+        # extract info for grade
+        meta_info = dict()
+        for uid in user_ids:
+
+            meta_info[uid] = dict()
+
+            for experiment_type in exp_list:
+
+                meta_info[uid][experiment_type] = list()
+                user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+
+                # 1. evaluation session mean in compare to others: (higher-current) / (higher-lower)
+                meta_info[uid][experiment_type].append(
+                    (higher_eval_res[experiment_type]-user_eval_result)
+                    / (higher_eval_res[experiment_type]-lower_eval_res[experiment_type])
+                )
+
+                # 2. find how much eps until convergence (99% of evaluation mean score)
+                user_train_results = raw_info_dict[uid][experiment_type]['train']
+
+                p1_found = False
+                p10_found = False
+                p50_found = False
+                p90_found = False
+                p99_found = False
+
+                total_eps = len(user_train_results)
+                for i in range(total_eps):
+
+                    if not p1_found and user_train_results[i] > user_eval_result * 0.01:
+                        meta_info[uid][experiment_type].append(i/float(total_eps))
+                        p1_found = True
+                        break
+
+                    if not p10_found and user_train_results[i] > user_eval_result * 0.1:
+                        meta_info[uid][experiment_type].append(i/float(total_eps))
+                        p10_found = True
+                        break
+
+                    if not p50_found and user_train_results[i] > user_eval_result * 0.5:
+                        meta_info[uid][experiment_type].append(i/float(total_eps))
+                        p50_found = True
+                        break
+
+                    if not p90_found and user_train_results[i] > user_eval_result * 0.9:
+                        meta_info[uid][experiment_type].append(i/float(total_eps))
+                        p90_found = True
+                        break
+
+                    if not p99_found and user_train_results[i] > user_eval_result * 0.99:
+                        meta_info[uid][experiment_type].append(i/float(total_eps))
+                        p99_found = True
+                        break
+
 
 
 if __name__ == '__main__':
