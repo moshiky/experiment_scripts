@@ -34,7 +34,7 @@ class JavaExecutionManager:
                 JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
                 user_id,
                 run_type,
-                'logs'
+                JavaExecutionManagerConsts.EXECUTION_LOGS_FOLDER_NAME
             )
         try:
             os.makedirs(logs_dir_path)

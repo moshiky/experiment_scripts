@@ -7,6 +7,7 @@ from git_handler import GitHandler
 from experiment_consts import ExperimentConsts
 from evaluation_consts import EvaluationConsts
 from java_execution_manager import JavaExecutionManager
+from java_execution_manager_consts import JavaExecutionManagerConsts
 
 
 class ExperimentEvaluator:
@@ -332,6 +333,69 @@ class ExperimentEvaluator:
         self.__logger.log("failed branches:\n{failed_branches}".format(
             failed_branches='\n'.join(key + ': ' + self.__failed_branches[key] for key in self.__failed_branches.keys())
         ))
+
+    def generate_users_score(self):
+        self.__logger.log("begin score generation")
+
+        # read id list
+        with open(EvaluationConsts.ID_FILE_PATH, 'rb') as user_ids_file:
+            user_ids = user_ids_file.read().replace('\r', '').split('\n')
+
+        if user_ids[-1] == '':
+            user_ids = user_ids[:-1]
+        self.__logger.log("running {num_ids} ids:\n{ids}".format(num_ids=len(user_ids), ids='\n'.join(user_ids)))
+
+        raw_info_dict = dict()
+        for uid in user_ids:
+
+            raw_info_dict[uid] = dict()
+
+            for experiment_type in EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys():
+
+                raw_info_dict[uid] = list()
+
+                # build user results folder path
+                user_folder_name = \
+                    ExperimentConsts.EXPERIMENT_USER_BRANCH_NAME_FORMAT.format(
+                        user_name=uid, experiment_type=experiment_type
+                    )
+
+                self.__logger.log(
+                    'calculating score of {uid_and_experiment_type}'.format(uid_and_experiment_type=user_folder_name)
+                )
+
+                user_log_dir_path = \
+                    os.path.join(
+                        JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
+                        user_folder_name,
+                        JavaExecutionManagerConsts.EXECUTION_LOGS_FOLDER_NAME
+                    )
+                logs_dir_files = os.listdir(user_log_dir_path)
+
+                if len(logs_dir_files) != 1:
+                    self.__logger.error(
+                        'logs folder not contains what it should. files: {dir_files}'.format(dir_files=logs_dir_files)
+                    )
+                    continue
+
+                # reading user run log file
+                user_log_file_path = os.path.join(user_log_dir_path, logs_dir_files[0])
+                with open(user_log_file_path, 'rb') as user_run_log_file:
+                    log_file_content = user_run_log_file.read()
+
+                # split log file into lines
+                log_file_lines = log_file_content.split('\n')
+
+                # remove header
+                log_file_lines = log_file_lines[4:]
+
+                # parse lines
+                for line in log_file_lines:
+
+                    if line[0] == '['
+
+
+
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()

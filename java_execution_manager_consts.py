@@ -42,5 +42,7 @@ class JavaExecutionManagerConsts:
 
     COMMAND_FAILED_EXCEPTION_STRING = 'EXTERNAL_COMMAND_FAILED'
 
+    EXECUTION_LOGS_FOLDER_NAME = 'logs'
+
     def __init__(self):
         pass
