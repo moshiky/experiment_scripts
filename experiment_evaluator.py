@@ -573,7 +573,7 @@ class ExperimentEvaluator:
 
                     for p_type in learning_curve_factors.keys():
                         if meta_info[uid][experiment_type][p_type] is None \
-                                and user_train_results[i] < user_eval_result + (user_eval_result[0] - user_eval_result) * learning_curve_factors[p_type]:
+                                and user_train_results[i] < user_eval_result + (user_train_results[0] - user_eval_result) * learning_curve_factors[p_type]:
 
                             meta_info[uid][experiment_type][p_type] = i / float(total_eps)
 
