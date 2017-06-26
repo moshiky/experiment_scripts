@@ -1,7 +1,7 @@
 
 import os
 import shutil
-import math
+import csv
 from multiprocessing.dummy import Pool as ThreadPool
 from logger import Logger
 from git_handler import GitHandler
@@ -517,7 +517,7 @@ class ExperimentEvaluator:
         # find global info
         lower_eval_res = dict()  # lower = better
         higher_eval_res = dict()  # higher = worth
-
+        self.__logger.log('extracting eval info')
         for experiment_type in exp_list:
 
             tmp_lower = None
@@ -541,60 +541,91 @@ class ExperimentEvaluator:
             higher_eval_res[experiment_type] = tmp_higher
 
         # extract info for grade
+        learning_curve_factors = {
+            'p1': 0.01, 'p10': 0.1, 'p50': 0.5, 'p90': 0.9, 'p99': 0.99
+        }
         meta_info = dict()
+        self.__logger.log('extracting learning curve info')
         for uid in user_ids:
 
             meta_info[uid] = dict()
 
             for experiment_type in exp_list:
 
-                meta_info[uid][experiment_type] = list()
-                user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+                meta_info[uid][experiment_type] = dict()
 
-                # 1. evaluation session mean in compare to others: (higher-current) / (higher-lower)
-                meta_info[uid][experiment_type].append(
-                    (higher_eval_res[experiment_type]-user_eval_result)
-                    / (higher_eval_res[experiment_type]-lower_eval_res[experiment_type])
-                )
-
-                # 2. find how much eps until convergence (99% of evaluation mean score)
+                # 1. train session mean in compare to others: (higher-current) / (higher-lower)
                 user_train_results = raw_info_dict[uid][experiment_type]['train']
+                meta_info[uid][experiment_type]['train_mean'] = sum(user_train_results) / len(user_train_results)
 
-                p1_found = False
-                p10_found = False
-                p50_found = False
-                p90_found = False
-                p99_found = False
+                # 2. evaluation session mean in compare to others: (higher-current) / (higher-lower)
+                user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+                meta_info[uid][experiment_type]['eval_mean'] = \
+                    (higher_eval_res[experiment_type] - user_eval_result)\
+                    / (higher_eval_res[experiment_type] - lower_eval_res[experiment_type])
+
+                # 3. find how much eps until convergence
+                for p_type in learning_curve_factors.keys():
+                    meta_info[uid][experiment_type][p_type] = None
 
                 total_eps = len(user_train_results)
                 for i in range(total_eps):
 
-                    if not p1_found and user_train_results[i] > user_eval_result * 0.01:
-                        meta_info[uid][experiment_type].append(i/float(total_eps))
-                        p1_found = True
-                        break
+                    for p_type in learning_curve_factors.keys():
+                        if meta_info[uid][experiment_type][p_type] is None \
+                                and user_train_results[i] < user_eval_result + (user_eval_result[0] - user_eval_result) * learning_curve_factors[p_type]:
 
-                    if not p10_found and user_train_results[i] > user_eval_result * 0.1:
-                        meta_info[uid][experiment_type].append(i/float(total_eps))
-                        p10_found = True
-                        break
+                            meta_info[uid][experiment_type][p_type] = i / float(total_eps)
 
-                    if not p50_found and user_train_results[i] > user_eval_result * 0.5:
-                        meta_info[uid][experiment_type].append(i/float(total_eps))
-                        p50_found = True
-                        break
+        # normalize results
+        self.__logger.log('normalizing results')
+        stats_keys = ['train_mean'] + learning_curve_factors.keys()
+        stats = dict()
+        for p_type in stats_keys:
+            stats[p_type] = {'lower': None, 'higher': None}
 
-                    if not p90_found and user_train_results[i] > user_eval_result * 0.9:
-                        meta_info[uid][experiment_type].append(i/float(total_eps))
-                        p90_found = True
-                        break
+        for experiment_type in exp_list:
 
-                    if not p99_found and user_train_results[i] > user_eval_result * 0.99:
-                        meta_info[uid][experiment_type].append(i/float(total_eps))
-                        p99_found = True
-                        break
+            # find higher and lower scores
+            for uid in user_ids:
 
+                for p_type in stats.keys():
 
+                    if stats[p_type]['lower'] is None \
+                            or meta_info[uid][experiment_type][p_type] < stats[p_type]['lower']:
+                        stats[p_type]['lower'] = meta_info[uid][experiment_type][p_type]
+
+                    if stats[p_type]['higher'] is None \
+                            or meta_info[uid][experiment_type][p_type] > stats[p_type]['higher']:
+                        stats[p_type]['higher'] = meta_info[uid][experiment_type][p_type]
+
+            # normalize results accordingly
+            for uid in user_ids:
+
+                for p_type in stats.keys():
+
+                    meta_info[uid][experiment_type][p_type] = \
+                        (stats[p_type]['higher'] - meta_info[uid][experiment_type][p_type]) \
+                        / (stats[p_type]['higher'] - stats[p_type]['lower'])
+
+        # write results to csv
+        self.__logger.log('writing info to csv file')
+        csv_file_path = os.path.join(os.path.dirname(__file__), 'scores.csv')
+        stats_keys = ['user_id', 'experiment_type', 'eval_mean'] + stats_keys
+        if not os.path.exists(csv_file_path):
+            with open(csv_file_path, 'wb') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(stats_keys)
+
+        for uid in user_ids:
+            for experiment_type in exp_list:
+                fields = [uid, experiment_type] + meta_info[uid][experiment_type]
+
+                with open(csv_file_path, 'ab') as csv_file:
+                    writer = csv.writer(csv_file)
+                    writer.writerow(fields)
+
+        self.__logger.log('score calculation completed')
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
