@@ -560,20 +560,22 @@ class ExperimentEvaluator:
 
                 # 2. evaluation session mean in compare to others: (higher-current) / (higher-lower)
                 user_eval_result = raw_info_dict[uid][experiment_type]['eval']
-                meta_info[uid][experiment_type]['eval_mean'] = \
+                meta_info[uid][experiment_type]['eval_mean'] = user_eval_result
+                meta_info[uid][experiment_type]['score__eval_mean'] = \
                     (higher_eval_res[experiment_type] - user_eval_result)\
                     / (higher_eval_res[experiment_type] - lower_eval_res[experiment_type])
 
                 # 3. find how much eps until convergence
-                for p_type in learning_curve_factors.keys():
+                for p_type in learning_curve_factors:
                     meta_info[uid][experiment_type][p_type] = None
 
                 total_eps = len(user_train_results)
+                first_result = sum(user_train_results[:10]) / 10.0
                 for i in range(total_eps):
 
-                    for p_type in learning_curve_factors.keys():
+                    for p_type in learning_curve_factors:
                         if meta_info[uid][experiment_type][p_type] is None \
-                                and user_train_results[i] < user_eval_result + (user_train_results[0] - user_eval_result) * learning_curve_factors[p_type]:
+                                and user_train_results[i] < first_result - (first_result - user_eval_result) * learning_curve_factors[p_type]:
 
                             meta_info[uid][experiment_type][p_type] = i / float(total_eps)
 
@@ -589,7 +591,7 @@ class ExperimentEvaluator:
             # find higher and lower scores
             for uid in user_ids:
 
-                for p_type in stats.keys():
+                for p_type in stats:
 
                     if stats[p_type]['lower'] is None \
                             or meta_info[uid][experiment_type][p_type] < stats[p_type]['lower']:
@@ -602,24 +604,30 @@ class ExperimentEvaluator:
             # normalize results accordingly
             for uid in user_ids:
 
-                for p_type in stats.keys():
+                for p_type in stats:
 
-                    meta_info[uid][experiment_type][p_type] = \
+                    meta_info[uid][experiment_type]['score__' + p_type] = \
                         (stats[p_type]['higher'] - meta_info[uid][experiment_type][p_type]) \
                         / (stats[p_type]['higher'] - stats[p_type]['lower'])
 
         # write results to csv
         self.__logger.log('writing info to csv file')
         csv_file_path = os.path.join(os.path.dirname(__file__), 'scores.csv')
-        stats_keys = ['user_id', 'experiment_type', 'eval_mean'] + stats_keys
-        if not os.path.exists(csv_file_path):
-            with open(csv_file_path, 'wb') as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(stats_keys)
+
+        stats_keys = ['eval_mean'] + stats_keys
+        stats_keys += ['score__' + key_name for key_name in stats_keys]
+
+        with open(csv_file_path, 'wb') as csv_file:
+            writer = csv.writer(csv_file)
+
+            headers = ['user_id', 'experiment_type'] + stats_keys
+            writer.writerow(headers)
 
         for uid in user_ids:
             for experiment_type in exp_list:
-                fields = [uid, experiment_type] + meta_info[uid][experiment_type]
+                fields = [uid, experiment_type]
+                for key_name in stats_keys:
+                    fields.append(meta_info[uid][experiment_type][key_name])
 
                 with open(csv_file_path, 'ab') as csv_file:
                     writer = csv.writer(csv_file)
