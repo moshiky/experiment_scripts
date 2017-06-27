@@ -129,12 +129,20 @@ class ExperimentEvaluator:
         self.__logger.log("begin result generation")
 
         # read id list
-        with open(EvaluationConsts.ID_FILE_PATH, 'rb') as user_ids_file:
-            user_ids = user_ids_file.read().replace('\r', '').split('\n')
+        with open(EvaluationConsts.ID_FILE_PATH, 'rb') as configuration_row:
+            configuration_lines = configuration_row.read().replace('\r', '').split('\n')
 
-        if user_ids[-1] == '':
-            user_ids = user_ids[:-1]
-        self.__logger.log("running {num_ids} ids:\n{ids}".format(num_ids=len(user_ids), ids='\n'.join(user_ids)))
+        if configuration_lines[-1] == '':
+            configuration_lines = configuration_lines[:-1]
+        self.__logger.log(
+            "running {configuration_count} ids:\n{configurations}".format(
+                configuration_count=len(configuration_lines), configurations='\n'.join(configuration_lines)
+            )
+        )
+
+        run_configurations = map(lambda x: x.split(' '), configuration_lines)
+        full_experiments_list = list(EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys()) + ['similarities_on_reward_shaping']
+        run_configurations = map(lambda x: x if len(x) > 1 else x + full_experiments_list, run_configurations)
 
         # checkout the evaluation code
         self.__git_handler.checkout_branch(
@@ -154,13 +162,20 @@ class ExperimentEvaluator:
             self.__logger.log('preparing experiment: {experiment_type}'.format(experiment_type=experiment_type))
 
             if not self.__change_configuration(
-                    EvaluationConsts.EVALUATION_SOURCE_PATH, EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
+                    EvaluationConsts.EVALUATION_SOURCE_PATH,
+                    EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
             ):
                 # skip to next experiment type
                 continue
 
             # iterate user ids
-            for user_id in user_ids:
+            for configuration_record in run_configurations:
+
+                if experiment_type not in configuration_record:
+                    # skip that experiment type for current user
+                    continue
+
+                user_id = configuration_record[0]
 
                 # checkout user code
                 user_branch_name = \
@@ -229,7 +244,12 @@ class ExperimentEvaluator:
                     continue
 
         # create Similarities on Reward Shaping folders
-        for user_id in user_ids:
+        for configuration_record in configuration_lines:
+
+            if 'similarities_on_reward_shaping' not in configuration_record:
+                # skip that experiment type for current user
+                continue
+
             self.__logger.log('preparing user {user_id} similarities_on_reward_shaping folder'.format(user_id=user_id))
 
             # create source folder paths
@@ -637,5 +657,5 @@ class ExperimentEvaluator:
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
-    # experiment_evaluator.generate_results()
-    experiment_evaluator.generate_users_score()
+    experiment_evaluator.generate_results()
+    # experiment_evaluator.generate_users_score()
