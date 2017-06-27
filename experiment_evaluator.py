@@ -171,10 +171,6 @@ class ExperimentEvaluator:
             # iterate user ids
             for configuration_record in run_configurations:
 
-                if experiment_type not in configuration_record:
-                    # skip that experiment type for current user
-                    continue
-
                 user_id = configuration_record[0]
 
                 # checkout user code
@@ -230,7 +226,8 @@ class ExperimentEvaluator:
                 if self.__copy_user_experiment_files(
                         experiment_type, EvaluationConsts.USER_SOURCE_PATH, evaluation_with_user_code_folder_path
                 ):
-                    folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
+                    if experiment_type in configuration_record:
+                        folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
                 else:
                     self.__logger.error('some files not copied, see log for more info. skipping to next user id.')
 
@@ -244,11 +241,13 @@ class ExperimentEvaluator:
                     continue
 
         # create Similarities on Reward Shaping folders
-        for configuration_record in configuration_lines:
+        for configuration_record in run_configurations:
 
             if 'similarities_on_reward_shaping' not in configuration_record:
                 # skip that experiment type for current user
                 continue
+
+            user_id = configuration_record[0]
 
             self.__logger.log('preparing user {user_id} similarities_on_reward_shaping folder'.format(user_id=user_id))
 
@@ -343,13 +342,13 @@ class ExperimentEvaluator:
         ))
         thread_pool = ThreadPool(EvaluationConsts.MAX_THREADS)
 
-        self.__logger.log('begin threads run')
+        self.__logger.log('########### begin threads run ###########')
         thread_pool.map(self.__evaluate_code_folder, folder_paths_to_evaluate)
         thread_pool.close()
 
         self.__logger.log('wait for all threads to finish')
         thread_pool.join()
-        self.__logger.log('all folders evaluated')
+        self.__logger.log('########### all folders evaluated ###########')
 
         self.__logger.log("failed branches:\n{failed_branches}".format(
             failed_branches='\n'.join(key + ': ' + self.__failed_branches[key] for key in self.__failed_branches.keys())
