@@ -56,13 +56,7 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.EXECUTE_FILE_NAME
                 ),
-                dependencies=';'.join(
-                    [class_files_dir_path] +
-                    map(
-                        lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
-                        JavaExecutionManagerConsts.DEPENDENCY_FILES
-                    )
-                ),
+                dependencies=';'.join([class_files_dir_path] + JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS),
                 main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
             )
 
@@ -77,12 +71,7 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.COMPILER_FILE_NAME
                 ),
-                dependencies=';'.join(
-                    map(
-                        lambda name: os.path.join(JavaExecutionManagerConsts.DEPENDENCY_LIB_PATH, name),
-                        JavaExecutionManagerConsts.DEPENDENCY_FILES
-                    )
-                ),
+                dependencies=';'.join(JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS),
                 output_path=class_files_dir_path,
                 source_path=' '.join(
                     map(
