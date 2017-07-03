@@ -23,6 +23,7 @@ class EvaluationConsts:
     EVALUATION_BRANCH_NAME = 'evaluation_version'
 
     ID_FILE_PATH = os.path.join(os.path.dirname(__file__), 'ids.txt')
+    EVALUATION_IDS_FILE_PATH = os.path.join(os.path.dirname(__file__), 'eval_ids.txt')
 
     # should config!
     EXPERIMENT_TYPE_KEYS = {

@@ -95,3 +95,6 @@ ENV/
 logs/
 tlx_output.txt
 ids.txt
+ids_full.txt
+eval_ids.txt
+scores.csv

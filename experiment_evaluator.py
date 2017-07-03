@@ -1,5 +1,6 @@
 
 import os
+import sys
 import shutil
 import csv
 from multiprocessing.dummy import Pool as ThreadPool
@@ -475,7 +476,7 @@ class ExperimentEvaluator:
         self.__logger.log("begin score generation")
 
         # read id list
-        with open(EvaluationConsts.ID_FILE_PATH, 'rb') as user_ids_file:
+        with open(EvaluationConsts.EVALUATION_IDS_FILE_PATH, 'rb') as user_ids_file:
             user_ids = user_ids_file.read().replace('\r', '').split('\n')
 
         if user_ids[-1] == '':
@@ -530,7 +531,9 @@ class ExperimentEvaluator:
                     raw_info_dict[uid][experiment_type] = self.__parse_selected_lines(log_file_lines)
 
                 except Exception, ex:
-                    self.__logger.error('log file parsing failed. ex={ex}'.format(ex=ex))
+                    self.__logger.error('log file parsing failed. uid={uid} exp_type={exp_type} ex={ex}'.format(
+                        uid=uid, exp_type=experiment_type, ex=ex
+                    ))
                     return None
 
         # find global info
@@ -596,7 +599,7 @@ class ExperimentEvaluator:
                         if meta_info[uid][experiment_type][p_type] is None \
                                 and user_train_results[i] < first_result - (first_result - user_eval_result) * learning_curve_factors[p_type]:
 
-                            meta_info[uid][experiment_type][p_type] = i / float(total_eps)
+                            meta_info[uid][experiment_type][p_type] = i
 
         # normalize results
         self.__logger.log('normalizing results')
@@ -656,5 +659,8 @@ class ExperimentEvaluator:
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
-    experiment_evaluator.generate_results()
-    # experiment_evaluator.generate_users_score()
+
+    if sys.argv[1] == '-r':
+        experiment_evaluator.generate_results()
+    elif sys.argv[1] == '-s':
+        experiment_evaluator.generate_users_score()
