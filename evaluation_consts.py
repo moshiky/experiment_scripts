@@ -27,22 +27,22 @@ class EvaluationConsts:
 
     # should config!
     EXPERIMENT_TYPE_KEYS = {
-        'abstraction': 8,
-        'reward_shaping': 11,
-        'similarities': 10
+        'abstraction': 'Abstraction',
+        'reward_shaping': 'RewardShaping',
+        'similarities': 'Similarities'
     }
     SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY = 13
 
     # should config!
     EXPERIMENT_REPLACE_FILES = {
         'abstraction': [
-            os.path.join('src', 'main', 'java', 'problem', 'predator', 'FeatureExtractor.java')
+            os.path.join('src', 'main', 'java', 'competition', 'richmario', 'agents', 'AbstractionEnsembleAgent.java')
         ],
         'reward_shaping': [
-            os.path.join('src', 'main', 'java', 'problem', 'predator', 'ShapingManager.java')
+            os.path.join('src', 'main', 'java', 'competition', 'richmario', 'experiment', 'ShapingManager.java')
         ],
         'similarities': [
-            os.path.join('src', 'main', 'java', 'problem', 'predator', 'SimilarityManager.java')
+            os.path.join('src', 'main', 'java', 'competition', 'richmario', 'experiment', 'SimilarityManager.java')
         ]
     }
 
@@ -50,3 +50,13 @@ class EvaluationConsts:
 
     MAX_THREADS = 5
 
+    # replace parts for similarities on reward shaping
+    SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE = r'''if ({cond}) {'''
+
+    ORIGINAL_CONDITIONS = {
+        'similarities': r'''AgentType.Similarities != SimpleExperiment.activeAgentType''',
+        'reward_shaping': r'''AgentType.RewardShaping != SimpleExperiment.activeAgentType'''
+    }
+
+    SIMILARITIES_ON_REWARD_SHAPING_COND = \
+        r'''(AgentType.RewardShaping != SimpleExperiment.activeAgentType) && (AgentType.SimilaritiesOnRewardShaping != SimpleExperiment.activeAgentType)'''

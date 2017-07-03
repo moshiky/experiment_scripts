@@ -81,49 +81,48 @@ class ExperimentEvaluator:
 
         return True
 
-    def __change_configuration(self, source_folder_path, new_configuration_key):
-        # modify evaluation code to run the specific experiment
-        run_configuration_file_path = \
-            EvaluationConsts.RUN_CONFIGURATION_FILE_TEMPLATE.format(
-                folder_path=source_folder_path
-            )
-        with open(run_configuration_file_path, 'rb') as configuration_file:
-            configuration_file_content = configuration_file.read()
+    '''
+    file_path = EvaluationConsts.RUN_CONFIGURATION_FILE_TEMPLATE.format(folder_path=source_folder_path)
+    new_content = experiment_id
+    possible_value_list = EvaluationConsts.EXPERIMENT_TYPE_KEYS.values()
+    value_template = EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING
+    '''
 
-        # build current experiment configuration string
-        current_configuration_string = \
-            EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(
-                experiment_id=new_configuration_key
-            )
+    def __custom_file_edit(self, file_path, new_content_value, possible_value_list, value_template):
+        # read original file content
+        with open(file_path, 'rb') as destination_file:
+            file_content = destination_file.read()
 
-        # search for other configurations and replace them with current experiment configuration
-        configuration_replaced = False
-        for experiment_id in EvaluationConsts.EXPERIMENT_TYPE_KEYS.values():
+        # build required value string
+        required_value_string = value_template.format(new_content_value)
 
-            # build experiment configuration string
-            experiment_configuration_string = \
-                EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING.format(experiment_id=experiment_id)
+        # search for other possible values and replace them with required value
+        content_replaced = False
+        for file_value in possible_value_list:
 
-            # replace other experiment configuration with current experiment configuration
-            if configuration_file_content.find(experiment_configuration_string) > -1:
-                configuration_file_content = \
-                    configuration_file_content.replace(
-                        experiment_configuration_string,
-                        current_configuration_string
+            # build possible value string
+            value_string = value_template.format(file_value)
+
+            # replace other possible values with required one
+            if file_content.find(value_string) > -1:
+                file_content = \
+                    file_content.replace(
+                        value_string,
+                        required_value_string
                     )
-                configuration_replaced = True
+                content_replaced = True
                 break
 
-        # override old configuration file with updated content
-        if configuration_replaced:
-            with open(run_configuration_file_path, 'wb') as configuration_file:
-                configuration_file.write(configuration_file_content)
+        # override old content with updated content
+        if content_replaced:
+            with open(file_path, 'wb') as destination_file:
+                destination_file.write(file_content)
         else:
-            self.__logger.error('configuration not replaced. file content:\n***\n{file_content}\n***'.format(
-                file_content=configuration_file_content
+            self.__logger.error('content not replaced. file content:\n***\n{file_content}\n***'.format(
+                file_content=file_content
             ))
 
-        return configuration_replaced
+        return content_replaced
 
     def generate_results(self):
 
@@ -162,9 +161,12 @@ class ExperimentEvaluator:
 
             self.__logger.log('preparing experiment: {experiment_type}'.format(experiment_type=experiment_type))
 
-            if not self.__change_configuration(
-                    EvaluationConsts.EVALUATION_SOURCE_PATH,
-                    EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type]
+            if not self.__custom_file_edit(
+                    EvaluationConsts.RUN_CONFIGURATION_FILE_TEMPLATE.format(
+                        folder_path=EvaluationConsts.EVALUATION_SOURCE_PATH),
+                    EvaluationConsts.EXPERIMENT_TYPE_KEYS[experiment_type],
+                    EvaluationConsts.EXPERIMENT_TYPE_KEYS.values(),
+                    EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING
             ):
                 # skip to next experiment type
                 continue
@@ -322,11 +324,32 @@ class ExperimentEvaluator:
                     raise Exception('failed coping similarities files')
 
                 # modify configuration to run SimilaritiesOnRewardShaping
-                if not self.__change_configuration(
-                        similarities_on_reward_shaping_folder_path_with_folder_name,
-                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY
+                if not self.__custom_file_edit(
+                        EvaluationConsts.RUN_CONFIGURATION_FILE_TEMPLATE.format(
+                            folder_path=similarities_on_reward_shaping_folder_path_with_folder_name),
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY,
+                        EvaluationConsts.EXPERIMENT_TYPE_KEYS.values(),
+                        EvaluationConsts.EXPERIMENT_CONFIGURATION_BASE_STRING
                 ):
-                    raise Exception('failed changing configuration')
+                    raise Exception('failed changing configuration for similarities on reward shaping')
+
+                # modify similarities file to run code when in combined mode
+                if not self.__custom_file_edit(
+                        EvaluationConsts.EXPERIMENT_REPLACE_FILES['similarities'][0],
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
+                        EvaluationConsts.ORIGINAL_CONDITIONS.values(),
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE
+                ):
+                    raise Exception('failed changing similarities file content for similarities on reward shaping')
+
+                # modify similarities file to run code when in combined mode
+                if not self.__custom_file_edit(
+                        EvaluationConsts.EXPERIMENT_REPLACE_FILES['reward_shaping'][0],
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
+                        EvaluationConsts.ORIGINAL_CONDITIONS.values(),
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE
+                ):
+                    raise Exception('failed changing reward shaping file content for similarities on reward shaping')
 
             except Exception, ex:
                 self.__logger.error('failed crating folder. exception: {ex}'.format(ex=ex))
