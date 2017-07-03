@@ -7,7 +7,7 @@ class EvaluationConsts:
     EVALUATION_SOURCE_BASE_PATH = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'evaluation_source'))
 
     # should config!
-    SOURCE_FOLDER_NAME = 'predator_experiment_3'
+    SOURCE_FOLDER_NAME = 'mario_experiment'
 
     EVALUATION_SOURCE_PATH = os.path.join(EVALUATION_SOURCE_BASE_PATH, 'evaluation', SOURCE_FOLDER_NAME)
 
@@ -15,10 +15,10 @@ class EvaluationConsts:
 
     # should config!
     RUN_CONFIGURATION_FILE_TEMPLATE = \
-        os.path.join('{folder_path}', 'src', 'main', 'java', 'problem', 'predator', 'Experiments.java')
+        os.path.join('{folder_path}', 'src', 'main', 'java', 'competition', 'richmario', 'SimpleExperiment.java')
 
     # should config!
-    EXPERIMENT_CONFIGURATION_BASE_STRING = 'int[]{{{experiment_id}}}'
+    EXPERIMENT_CONFIGURATION_BASE_STRING = 'AgentType[] agentsToRun = new AgentType[] { AgentType.{experiment_id} };'
 
     EVALUATION_BRANCH_NAME = 'evaluation_version'
 
