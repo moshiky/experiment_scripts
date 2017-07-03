@@ -10,22 +10,23 @@ class JavaExecutionManagerConsts:
 
     # custom values for each experiment type
 
+    MAVEN_DEPENDENCIES_FOLDER_PATH = r'C:\Users\Dev\.m2\repository'
+
     DEPENDENCY_FILE_PATHS = [
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jfreechart-1.0.19.jar',
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jcommon-1.0.23.jar',
-        r'C:\exp\libs\commons-lang3-3.6-bin\commons-lang3-3.6\commons-lang3-3.6.jar'
+        r'C:\exp\libs\commons-lang3-3.6-bin\commons-lang3-3.6\commons-lang3-3.6.jar',
+        r'C:\exp\libs\commons-math3-3.6.1-bin\commons-math3-3.6.1\commons-math3-3.6.1.jar',
+        r'C:\exp\libs\asm-all-3.3.jar',
+        r'C:\exp\libs\junit-4.12.jar',
+        r'C:\exp\libs\testng-6.9.10.jar'
     ]
 
-    SOURCE_FILES = [
-        r'src\main\java\problem\predator\*.java',
-        r'src\main\java\problem\learning\*.java',
-        r'src\main\java\problem\utils\*.java',
-        r'src\main\java\problem\RNG.java'
-    ]
+    SOURCE_BASE_FOLDER = r'src\main\java'
 
     # constants
 
-    DOMAIN_NAME = 'predator'
+    DOMAIN_NAME = 'mario'
 
     OUTPUT_DIR_PATH = os.path.join(os.path.dirname(__file__), '..', 'evaluation_results', DOMAIN_NAME)
 
@@ -33,11 +34,11 @@ class JavaExecutionManagerConsts:
 
     EXECUTE_FILE_NAME = r'java.exe'
 
-    MAIN_CLASS_NAME = r'problem.predator.Experiments'
+    MAIN_CLASS_NAME = r'competition.richmario.SimpleExperiment'
 
-    COMPILE_COMMAND_TEMPLATE = '"{compiler_path}" -classpath "{dependencies}" -d "{output_path}" {source_path}'
+    COMPILE_COMMAND_TEMPLATE = '"{compiler_path}" -classpath {dependencies} -d "{output_path}" {source_path}'
 
-    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -classpath "{dependencies}" {main_class_name}'
+    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -classpath {dependencies} {main_class_name}'
 
     COMMAND_FAILED_EXCEPTION_STRING = 'EXTERNAL_COMMAND_FAILED'
 

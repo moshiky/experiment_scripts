@@ -334,17 +334,25 @@ class ExperimentEvaluator:
                     raise Exception('failed changing configuration for similarities on reward shaping')
 
                 # modify similarities file to run code when in combined mode
+                self.__logger.log('here S')
                 if not self.__custom_file_edit(
-                        EvaluationConsts.EXPERIMENT_REPLACE_FILES['similarities'][0],
+                        os.path.join(
+                            similarities_on_reward_shaping_folder_path_with_folder_name,
+                            EvaluationConsts.EXPERIMENT_REPLACE_FILES['similarities'][0]
+                        ),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
                         EvaluationConsts.ORIGINAL_CONDITIONS.values(),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE
                 ):
                     raise Exception('failed changing similarities file content for similarities on reward shaping')
 
-                # modify similarities file to run code when in combined mode
+                # modify reward shaping file to run code when in combined mode
+                self.__logger.log('here R')
                 if not self.__custom_file_edit(
-                        EvaluationConsts.EXPERIMENT_REPLACE_FILES['reward_shaping'][0],
+                        os.path.join(
+                            similarities_on_reward_shaping_folder_path_with_folder_name,
+                            EvaluationConsts.EXPERIMENT_REPLACE_FILES['reward_shaping'][0]
+                        ),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
                         EvaluationConsts.ORIGINAL_CONDITIONS.values(),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE

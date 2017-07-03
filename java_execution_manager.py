@@ -1,6 +1,8 @@
 
 import os
+import glob
 import subprocess
+import random
 from logger import Logger
 from java_execution_manager_consts import JavaExecutionManagerConsts
 
@@ -9,6 +11,7 @@ class JavaExecutionManager:
 
     def __init__(self, p_logger):
         self.__logger = p_logger
+        self.__rand_num = -1
 
     def run_code(self, source_dir_path):
         # build output dirs
@@ -49,6 +52,14 @@ class JavaExecutionManager:
         self.__run_compiled_code(class_files_dir_path)
 
     def __run_compiled_code(self, class_files_dir_path):
+        # get all dependency file paths
+        dependency_paths = self.__get_file_list(JavaExecutionManagerConsts.MAVEN_DEPENDENCIES_FOLDER_PATH, '.jar')
+        dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
+        self.__logger.log('dependencies file: ' + dependencies_file_path)
+        with open(dependencies_file_path, 'wb') as dependencies_file:
+            dependencies_file.write(';'.join([class_files_dir_path] + dependency_paths))
+
         # build run command
         command = \
             JavaExecutionManagerConsts.RUN_COMMAND_TEMPLATE.format(
@@ -56,14 +67,45 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.EXECUTE_FILE_NAME
                 ),
-                dependencies=';'.join([class_files_dir_path] + JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS),
+                dependencies='@' + dependencies_file_path,
                 main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
             )
 
         # run command
         self.__run_executable(command, cwd=os.path.dirname(class_files_dir_path))
 
+        # delete tmp file
+        os.remove(dependencies_file_path)
+
+    def __get_file_list(self, source_dir_path, extension):
+        dir_files = glob.glob(source_dir_path + r'\*')
+        java_files = list()
+        for file_name in dir_files:
+            if os.path.isdir(file_name):
+                # java_files.append(file_name + r'\*.java')
+                java_files += self.__get_file_list(file_name, extension)
+            elif file_name.endswith(extension):
+                java_files.append(file_name)
+        return java_files
+
     def __compile_code(self, source_dir_path, class_files_dir_path):
+        # create source files file
+        source_dir_path = os.path.join(source_dir_path, JavaExecutionManagerConsts.SOURCE_BASE_FOLDER)
+        source_paths = self.__get_file_list(source_dir_path, '.java')
+        self.__rand_num = random.randint(1, 9999999)
+        sources_file_path = r'c:\exp\sources_{rand_num}.txt'.format(rand_num=self.__rand_num)
+        self.__logger.log('sources file: ' + sources_file_path)
+        with open(sources_file_path, 'wb') as sources_file:
+            sources_file.write('\n'.join(source_paths))
+
+        # get all dependency file paths
+        dependency_paths = self.__get_file_list(JavaExecutionManagerConsts.MAVEN_DEPENDENCIES_FOLDER_PATH, '.jar')
+        dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
+        self.__logger.log('dependencies file: ' + dependencies_file_path)
+        with open(dependencies_file_path, 'wb') as dependencies_file:
+            dependencies_file.write(';'.join(dependency_paths))
+
         # build params list
         command = \
             JavaExecutionManagerConsts.COMPILE_COMMAND_TEMPLATE.format(
@@ -71,18 +113,17 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.COMPILER_FILE_NAME
                 ),
-                dependencies=';'.join(JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS),
+                dependencies='@' + dependencies_file_path,
                 output_path=class_files_dir_path,
-                source_path=' '.join(
-                    map(
-                        lambda name: os.path.join(source_dir_path, name),
-                        JavaExecutionManagerConsts.SOURCE_FILES
-                    )
-                )
+                source_path='@' + sources_file_path
             )
 
         # run command
         self.__run_executable(command)
+
+        # delete tmp files
+        os.remove(sources_file_path)
+        os.remove(dependencies_file_path)
 
     def __run_executable(self, command, cwd=None):
         self.__logger.log('running command: {cmd}, on: {cwd}'.format(cmd=command, cwd=cwd), should_print=False)

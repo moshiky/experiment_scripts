@@ -18,7 +18,7 @@ class EvaluationConsts:
         os.path.join('{folder_path}', 'src', 'main', 'java', 'competition', 'richmario', 'SimpleExperiment.java')
 
     # should config!
-    EXPERIMENT_CONFIGURATION_BASE_STRING = 'AgentType[] agentsToRun = new AgentType[] { AgentType.{experiment_id} };'
+    EXPERIMENT_CONFIGURATION_BASE_STRING = 'AgentType[] agentsToRun = new AgentType[] {{ AgentType.{0} }};'
 
     EVALUATION_BRANCH_NAME = 'evaluation_version'
 
@@ -31,7 +31,7 @@ class EvaluationConsts:
         'reward_shaping': 'RewardShaping',
         'similarities': 'Similarities'
     }
-    SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY = 13
+    SIMILARITIES_ON_REWARD_SHAPING_CONFIGURATION_KEY = 'SimilaritiesOnRewardShaping'
 
     # should config!
     EXPERIMENT_REPLACE_FILES = {
@@ -48,15 +48,18 @@ class EvaluationConsts:
 
     BRANCH_NOT_FOUND_EXCEPTION_STRING = 'BRANCH_NOT_FOUND'
 
-    MAX_THREADS = 5
+    MAX_THREADS = 2
 
     # replace parts for similarities on reward shaping
-    SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE = r'''if ({cond}) {'''
+    SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE = r'''if ({0}) {{'''
 
     ORIGINAL_CONDITIONS = {
-        'similarities': r'''AgentType.Similarities != SimpleExperiment.activeAgentType''',
-        'reward_shaping': r'''AgentType.RewardShaping != SimpleExperiment.activeAgentType'''
+        'similarities': r'AgentType.Similarities != SimpleExperiment.activeAgentType',
+        'reward_shaping': r'AgentType.RewardShaping != SimpleExperiment.activeAgentType'
     }
 
     SIMILARITIES_ON_REWARD_SHAPING_COND = \
-        r'''(AgentType.RewardShaping != SimpleExperiment.activeAgentType) && (AgentType.SimilaritiesOnRewardShaping != SimpleExperiment.activeAgentType)'''
+        '({similarities_condition}) && ({reward_shaping_condition})'.format(
+            similarities_condition=ORIGINAL_CONDITIONS['similarities'],
+            reward_shaping_condition=ORIGINAL_CONDITIONS['reward_shaping']
+        )
