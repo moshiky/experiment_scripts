@@ -10,16 +10,37 @@ class JavaExecutionManagerConsts:
 
     # custom values for each experiment type
 
-    MAVEN_DEPENDENCIES_FOLDER_PATH = r'C:\Users\Dev\.m2\repository'
+    MAVEN_DEPENDENCIES_FOLDER_PATH = r'C:\Users\Experiment\.m2\repository'
 
     DEPENDENCY_FILE_PATHS = [
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jfreechart-1.0.19.jar',
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jcommon-1.0.23.jar',
         r'C:\exp\libs\commons-lang3-3.6-bin\commons-lang3-3.6\commons-lang3-3.6.jar',
-        r'C:\exp\libs\commons-math3-3.6.1-bin\commons-math3-3.6.1\commons-math3-3.6.1.jar',
-        r'C:\exp\libs\asm-all-3.3.jar',
-        r'C:\exp\libs\junit-4.12.jar',
-        r'C:\exp\libs\testng-6.9.10.jar'
+        r'C:\exp\libs\commons-math3-3.6.1-bin\commons-math3-3.6.1\commons-math3-3.6.1.jar'
+
+        # , r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\charsets.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\deploy.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\access-bridge-64.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\cldrdata.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\dnsns.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\jaccess.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\jfxrt.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\localedata.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\nashorn.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\sunec.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\sunjce_provider.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\sunmscapi.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\sunpkcs11.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\zipfs.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\javaws.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\jce.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\jfr.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\jfxswt.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\jsse.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\management-agent.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\plugin.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\resources.jar',
+        # r'C:\Program Files\Java\jdk1.8.0_131\jre\lib\rt.jar'
     ]
 
     SOURCE_BASE_FOLDER = r'src\main\java'

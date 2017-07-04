@@ -52,13 +52,16 @@ class JavaExecutionManager:
         self.__run_compiled_code(class_files_dir_path)
 
     def __run_compiled_code(self, class_files_dir_path):
+        class_files_dir_path = os.path.realpath(class_files_dir_path)
+
         # get all dependency file paths
         dependency_paths = self.__get_file_list(JavaExecutionManagerConsts.MAVEN_DEPENDENCIES_FOLDER_PATH, '.jar')
         dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependency_paths = [p.replace('\\', '\\\\') for p in dependency_paths]
         dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
         self.__logger.log('dependencies file: ' + dependencies_file_path)
         with open(dependencies_file_path, 'wb') as dependencies_file:
-            dependencies_file.write(';'.join([class_files_dir_path] + dependency_paths))
+            dependencies_file.write('"' + (';'.join(dependency_paths)) + '"')
 
         # build run command
         command = \
@@ -67,7 +70,7 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.EXECUTE_FILE_NAME
                 ),
-                dependencies='@' + dependencies_file_path,
+                dependencies=class_files_dir_path + ';@' + dependencies_file_path,
                 main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
             )
 
@@ -92,6 +95,7 @@ class JavaExecutionManager:
         # create source files file
         source_dir_path = os.path.join(source_dir_path, JavaExecutionManagerConsts.SOURCE_BASE_FOLDER)
         source_paths = self.__get_file_list(source_dir_path, '.java')
+        source_paths = ['"' + p.replace('\\', '\\\\') + '"' for p in source_paths]
         self.__rand_num = random.randint(1, 9999999)
         sources_file_path = r'c:\exp\sources_{rand_num}.txt'.format(rand_num=self.__rand_num)
         self.__logger.log('sources file: ' + sources_file_path)
@@ -101,10 +105,11 @@ class JavaExecutionManager:
         # get all dependency file paths
         dependency_paths = self.__get_file_list(JavaExecutionManagerConsts.MAVEN_DEPENDENCIES_FOLDER_PATH, '.jar')
         dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependency_paths = [p.replace('\\', '\\\\') for p in dependency_paths]
         dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
         self.__logger.log('dependencies file: ' + dependencies_file_path)
         with open(dependencies_file_path, 'wb') as dependencies_file:
-            dependencies_file.write(';'.join(dependency_paths))
+            dependencies_file.write('"' + (';'.join(dependency_paths)) + '"')
 
         # build params list
         command = \
