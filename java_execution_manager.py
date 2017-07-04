@@ -1,6 +1,7 @@
 
 import os
 import glob
+import shutil
 import subprocess
 import random
 from logger import Logger
@@ -55,13 +56,8 @@ class JavaExecutionManager:
         class_files_dir_path = os.path.realpath(class_files_dir_path)
 
         # get all dependency file paths
-        dependency_paths = self.__get_file_list(JavaExecutionManagerConsts.MAVEN_DEPENDENCIES_FOLDER_PATH, '.jar')
-        dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
-        dependency_paths = [p.replace('\\', '\\\\') for p in dependency_paths]
-        dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
-        self.__logger.log('dependencies file: ' + dependencies_file_path)
-        with open(dependencies_file_path, 'wb') as dependencies_file:
-            dependencies_file.write('"' + (';'.join(dependency_paths)) + '"')
+        dependency_paths = JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependency_paths.append(class_files_dir_path)
 
         # build run command
         command = \
@@ -70,15 +66,12 @@ class JavaExecutionManager:
                     JavaExecutionManagerConsts.JDK_PATH,
                     JavaExecutionManagerConsts.EXECUTE_FILE_NAME
                 ),
-                dependencies=class_files_dir_path + ';@' + dependencies_file_path,
+                dependencies=';'.join(dependency_paths),
                 main_class_name=JavaExecutionManagerConsts.MAIN_CLASS_NAME
             )
 
         # run command
         self.__run_executable(command, cwd=os.path.dirname(class_files_dir_path))
-
-        # delete tmp file
-        os.remove(dependencies_file_path)
 
     def __get_file_list(self, source_dir_path, extension):
         dir_files = glob.glob(source_dir_path + r'\*')
@@ -98,7 +91,7 @@ class JavaExecutionManager:
         source_paths = ['"' + p.replace('\\', '\\\\') + '"' for p in source_paths]
         self.__rand_num = random.randint(1, 9999999)
         sources_file_path = r'c:\exp\sources_{rand_num}.txt'.format(rand_num=self.__rand_num)
-        self.__logger.log('sources file: ' + sources_file_path)
+        self.__logger.log('sources file: ' + sources_file_path, should_print=False)
         with open(sources_file_path, 'wb') as sources_file:
             sources_file.write('\n'.join(source_paths))
 
@@ -107,7 +100,7 @@ class JavaExecutionManager:
         dependency_paths += JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
         dependency_paths = [p.replace('\\', '\\\\') for p in dependency_paths]
         dependencies_file_path = r'c:\exp\dependencies_{rand_num}.txt'.format(rand_num=self.__rand_num)
-        self.__logger.log('dependencies file: ' + dependencies_file_path)
+        self.__logger.log('dependencies file: ' + dependencies_file_path, should_print=False)
         with open(dependencies_file_path, 'wb') as dependencies_file:
             dependencies_file.write('"' + (';'.join(dependency_paths)) + '"')
 
@@ -125,6 +118,11 @@ class JavaExecutionManager:
 
         # run command
         self.__run_executable(command)
+
+        # copy resources folder
+        source_path = os.path.join(source_dir_path, JavaExecutionManagerConsts.RESOURCES_DIR_LOCATION)
+        destination_path = os.path.join(class_files_dir_path, JavaExecutionManagerConsts.RESOURCES_DIR_LOCATION)
+        shutil.copytree(source_path, destination_path)
 
         # delete tmp files
         os.remove(sources_file_path)
