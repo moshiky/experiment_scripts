@@ -164,7 +164,7 @@ class JavaExecutionManager:
             self.__logger.log('return value: {return_value}'.format(return_value=return_value), should_print=False)
 
             # exit if has errors
-            if has_errors or return_value != 0:
+            if has_errors or return_value not in [0, 130]:
                 raise Exception(JavaExecutionManagerConsts.COMMAND_FAILED_EXCEPTION_STRING)
 
         except Exception, ex:
