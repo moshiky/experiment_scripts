@@ -4,6 +4,7 @@ import sys
 import shutil
 import csv
 from multiprocessing.dummy import Pool as ThreadPool
+from threading import Lock
 from logger import Logger
 from git_handler import GitHandler
 from experiment_consts import ExperimentConsts
@@ -18,13 +19,15 @@ class ExperimentEvaluator:
         self.__logger = Logger()
         self.__git_handler = GitHandler(self.__logger)
         self.__failed_branches = dict()
+        self.__compile_lock = Lock()
 
     def __evaluate_code_folder(self, folder_path):
         self.__logger.log('evaluating folder: {folder_path}'.format(folder_path=folder_path))
+
         # compile and run code
         java_execution_manager = JavaExecutionManager(self.__logger)
         try:
-            java_execution_manager.run_code(folder_path)
+            java_execution_manager.run_code(folder_path, self.__compile_lock)
             self.__logger.log('folder evaluated successfully')
         except Exception, ex:
             self.__logger.log('folder evaluation failed')
@@ -211,7 +214,7 @@ class ExperimentEvaluator:
 
                 # remove old files in case already exists
                 if os.path.exists(evaluation_with_user_code_folder_path):
-                    os.remove(evaluation_with_user_code_folder_path)
+                    shutil.rmtree(evaluation_with_user_code_folder_path)
 
                 if not self.__duplicate_directory(
                         EvaluationConsts.EVALUATION_SOURCE_PATH, evaluation_with_user_code_folder_path
@@ -220,7 +223,7 @@ class ExperimentEvaluator:
                     user_branch_folder_path = \
                         os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
                     if os.path.exists(user_branch_folder_path):
-                        os.remove(user_branch_folder_path)
+                        shutil.rmtree(user_branch_folder_path)
 
                     # skip to next id
                     continue
@@ -238,7 +241,7 @@ class ExperimentEvaluator:
                     user_branch_folder_path = \
                         os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, user_branch_name)
                     if os.path.exists(user_branch_folder_path):
-                        os.remove(user_branch_folder_path)
+                        shutil.rmtree(user_branch_folder_path)
 
                     # useless here, but for case that more code will be added in the loop after this point
                     continue
@@ -360,7 +363,7 @@ class ExperimentEvaluator:
             except Exception, ex:
                 self.__logger.error('failed crating folder. exception: {ex}'.format(ex=ex))
                 if os.path.exists(similarities_on_reward_shaping_folder_path):
-                    os.remove(similarities_on_reward_shaping_folder_path)
+                    shutil.rmtree(similarities_on_reward_shaping_folder_path)
                 self.__logger.log('skipping to next user id')
                 continue
 
@@ -373,10 +376,9 @@ class ExperimentEvaluator:
         thread_pool = ThreadPool(EvaluationConsts.MAX_THREADS)
 
         self.__logger.log('########### begin threads run ###########')
+        self.__logger.log('wait for all threads to finish')
         thread_pool.map(self.__evaluate_code_folder, folder_paths_to_evaluate)
         thread_pool.close()
-
-        self.__logger.log('wait for all threads to finish')
         thread_pool.join()
         self.__logger.log('########### all folders evaluated ###########')
 
@@ -689,7 +691,7 @@ class ExperimentEvaluator:
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
 
-    if sys.argv[1] == '-r':
+    if sys.argv[1] == '-gr':
         experiment_evaluator.generate_results()
-    elif sys.argv[1] == '-s':
+    elif sys.argv[1] == '-gs':
         experiment_evaluator.generate_users_score()

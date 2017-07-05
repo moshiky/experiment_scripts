@@ -48,7 +48,7 @@ class EvaluationConsts:
 
     BRANCH_NOT_FOUND_EXCEPTION_STRING = 'BRANCH_NOT_FOUND'
 
-    MAX_THREADS = 2
+    MAX_THREADS = 12
 
     # replace parts for similarities on reward shaping
     SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE = r'''if ({0}) {{'''

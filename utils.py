@@ -1,12 +1,14 @@
 
 import os
 import sys
+import shutil
 from evaluation_consts import EvaluationConsts
 from java_execution_manager_consts import JavaExecutionManagerConsts
 
 
 def prepare_for_experiment():
     # 1. delete
+    pass
 
 
 def recursive_log_clear(folder_path):
@@ -35,7 +37,9 @@ def recursive_log_clear(folder_path):
 
 
 def delete_code_folders():
-    dir_folders = EvaluationConsts.EVALUATION_SOURCE_BASE_PATH
+    for file_name in os.listdir(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH):
+        if file_name not in ['user', 'evaluation']:
+            shutil.rmtree(os.path.join(EvaluationConsts.EVALUATION_SOURCE_BASE_PATH, file_name), ignore_errors=True)
 
 
 if __name__ == '__main__':

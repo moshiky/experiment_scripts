@@ -4,7 +4,7 @@ import glob
 import shutil
 import subprocess
 import random
-from logger import Logger
+from threading import Lock
 from java_execution_manager_consts import JavaExecutionManagerConsts
 
 
@@ -13,8 +13,9 @@ class JavaExecutionManager:
     def __init__(self, p_logger):
         self.__logger = p_logger
         self.__rand_num = -1
+        self.__compile_lock = Lock()
 
-    def run_code(self, source_dir_path):
+    def run_code(self, source_dir_path, compile_lock=None):
         # build output dirs
         user_results_dir_name = os.path.basename(os.path.dirname(source_dir_path))
         user_id = user_results_dir_name.split('_')[0]
@@ -47,12 +48,18 @@ class JavaExecutionManager:
                 raise ex
 
         # compile code
-        self.__compile_code(source_dir_path, class_files_dir_path)
+        if compile_lock is None:
+            compile_lock = self.__compile_lock
+
+        self.__logger.log('waiting for compiling to be available')
+        with compile_lock:
+            self.__compile_code(source_dir_path, class_files_dir_path)
 
         # run compiled code
         self.__run_compiled_code(class_files_dir_path)
 
     def __run_compiled_code(self, class_files_dir_path):
+        self.__logger.log('running code')
         class_files_dir_path = os.path.realpath(class_files_dir_path)
 
         # get all dependency file paths
@@ -85,6 +92,7 @@ class JavaExecutionManager:
         return java_files
 
     def __compile_code(self, source_dir_path, class_files_dir_path):
+        self.__logger.log('compiling')
         # create source files file
         source_dir_path = os.path.join(source_dir_path, JavaExecutionManagerConsts.SOURCE_BASE_FOLDER)
         source_paths = self.__get_file_list(source_dir_path, '.java')
@@ -162,9 +170,3 @@ class JavaExecutionManager:
         except Exception, ex:
             self.__logger.error('command failed with exception: {ex}'.format(ex=ex))
             raise ex
-
-
-if __name__ == '__main__':
-    logger = Logger()
-    compiler = JavaExecutionManager(logger)
-    compiler.run_code(r'c:\exp\predator_experiment_3')
