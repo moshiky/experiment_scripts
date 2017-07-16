@@ -660,7 +660,7 @@ class ExperimentEvaluator:
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
 
-    if sys.argv[1] == '-r':
+    if sys.argv[1] == '-gr':
         experiment_evaluator.generate_results()
-    elif sys.argv[1] == '-s':
+    elif sys.argv[1] == '-gs':
         experiment_evaluator.generate_users_score()

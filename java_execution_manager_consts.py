@@ -37,7 +37,7 @@ class JavaExecutionManagerConsts:
 
     COMPILE_COMMAND_TEMPLATE = '"{compiler_path}" -classpath "{dependencies}" -d "{output_path}" {source_path}'
 
-    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -classpath "{dependencies}" {main_class_name}'
+    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -Xmx7g -classpath "{dependencies}" {main_class_name}'
 
     COMMAND_FAILED_EXCEPTION_STRING = 'EXTERNAL_COMMAND_FAILED'
 
