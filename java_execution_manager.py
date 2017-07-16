@@ -70,7 +70,7 @@ class JavaExecutionManager:
         command = \
             JavaExecutionManagerConsts.RUN_COMMAND_TEMPLATE.format(
                 execute_file_path=os.path.join(
-                    JavaExecutionManagerConsts.JDK_PATH,
+                    JavaExecutionManagerConsts.JRE_PATH,
                     JavaExecutionManagerConsts.EXECUTE_FILE_NAME
                 ),
                 dependencies=';'.join(dependency_paths),
