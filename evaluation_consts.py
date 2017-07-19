@@ -63,3 +63,5 @@ class EvaluationConsts:
             similarities_condition=ORIGINAL_CONDITIONS['similarities'],
             reward_shaping_condition=ORIGINAL_CONDITIONS['reward_shaping']
         )
+
+    RESULTS_FOLDER_NAME = r'result_storage/mario_results'

@@ -507,11 +507,10 @@ class ExperimentEvaluator:
         self.__logger.log("begin score generation")
 
         # read id list
-        with open(EvaluationConsts.EVALUATION_IDS_FILE_PATH, 'rb') as user_ids_file:
-            user_ids = user_ids_file.read().replace('\r', '').split('\n')
-
-        if user_ids[-1] == '':
-            user_ids = user_ids[:-1]
+        current_folder_path = os.path.dirname(__file__)
+        user_ids = os.listdir(
+            os.path.join(current_folder_path, '..', EvaluationConsts.RESULTS_FOLDER_NAME)
+        )
         self.__logger.log("running {num_ids} ids:\n{ids}".format(num_ids=len(user_ids), ids='\n'.join(user_ids)))
 
         exp_list = list(EvaluationConsts.EXPERIMENT_TYPE_KEYS.keys())
@@ -531,23 +530,22 @@ class ExperimentEvaluator:
                     'calculating score of {uid} at {experiment_type}'.format(uid=uid, experiment_type=experiment_type)
                 )
 
-                user_log_dir_path = \
+                user_log_file_path = \
                     os.path.join(
-                        JavaExecutionManagerConsts.OUTPUT_DIR_PATH,
+                        current_folder_path, '..',
+                        EvaluationConsts.RESULTS_FOLDER_NAME,
                         uid,
-                        experiment_type,
-                        JavaExecutionManagerConsts.EXECUTION_LOGS_FOLDER_NAME
+                        experiment_type + '.log'
                     )
-                logs_dir_files = os.listdir(user_log_dir_path)
 
-                if len(logs_dir_files) != 1:
+                if not os.path.exists(user_log_file_path):
                     self.__logger.error(
-                        'logs folder not contains what it should. files: {dir_files}'.format(dir_files=logs_dir_files)
+                        'log file not found: {log_file_path}'.format(log_file_path=user_log_file_path)
                     )
+                    raw_info_dict[uid][experiment_type] = {'eval': -1, 'train': [-1]}
                     continue
 
                 # reading user run log file
-                user_log_file_path = os.path.join(user_log_dir_path, logs_dir_files[0])
                 with open(user_log_file_path, 'rb') as user_run_log_file:
                     log_file_content = user_run_log_file.read()
 
@@ -567,92 +565,92 @@ class ExperimentEvaluator:
                     ))
                     return None
 
-        # find global info
-        lower_eval_res = dict()  # lower = better
-        higher_eval_res = dict()  # higher = worth
-        self.__logger.log('extracting eval info')
-        for experiment_type in exp_list:
-
-            tmp_lower = None
-            tmp_higher = None
-
-            for uid in user_ids:
-
-                if tmp_lower is None:
-                    tmp_lower = tmp_higher = raw_info_dict[uid][experiment_type]['eval']
-
-                else:
-                    user_eval_result = raw_info_dict[uid][experiment_type]['eval']
-
-                    if tmp_lower > user_eval_result:
-                        tmp_lower = user_eval_result
-
-                    elif tmp_higher < user_eval_result:
-                        tmp_higher = user_eval_result
-
-            lower_eval_res[experiment_type] = tmp_lower
-            higher_eval_res[experiment_type] = tmp_higher
-
-        # extract info for grade
-        learning_curve_factors = {
-            'p1': 0.01, 'p10': 0.1, 'p50': 0.5, 'p90': 0.9, 'p99': 0.99
-        }
-        meta_info = dict()
+        # # find global info
+        # lower_eval_res = dict()  # lower = better
+        # higher_eval_res = dict()  # higher = worth
+        # self.__logger.log('extracting eval info')
+        # for experiment_type in exp_list:
+        #
+        #     tmp_lower = None
+        #     tmp_higher = None
+        #
+        #     for uid in user_ids:
+        #
+        #         if tmp_lower is None:
+        #             tmp_lower = tmp_higher = raw_info_dict[uid][experiment_type]['eval']
+        #
+        #         else:
+        #             user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+        #
+        #             if tmp_lower > user_eval_result:
+        #                 tmp_lower = user_eval_result
+        #
+        #             elif tmp_higher < user_eval_result:
+        #                 tmp_higher = user_eval_result
+        #
+        #     lower_eval_res[experiment_type] = tmp_lower
+        #     higher_eval_res[experiment_type] = tmp_higher
+        #
+        # # extract info for grade
+        # learning_curve_factors = {
+        #     'p1': 0.01, 'p10': 0.1, 'p50': 0.5, 'p90': 0.9, 'p99': 0.99
+        # }
+        # meta_info = dict()
         self.__logger.log('extracting learning curve info')
         for uid in user_ids:
 
-            meta_info[uid] = dict()
+            # meta_info[uid] = dict()
 
             for experiment_type in exp_list:
 
-                meta_info[uid][experiment_type] = dict()
+                # meta_info[uid][experiment_type] = dict()
 
                 # 1. train session mean in compare to others: (higher-current) / (higher-lower)
                 user_train_results = raw_info_dict[uid][experiment_type]['train']
-                meta_info[uid][experiment_type]['train_mean'] = sum(user_train_results) / len(user_train_results)
+                raw_info_dict[uid][experiment_type]['train_mean'] = sum(user_train_results) / len(user_train_results)
 
-                # 2. evaluation session mean in compare to others: (higher-current) / (higher-lower)
-                user_eval_result = raw_info_dict[uid][experiment_type]['eval']
-                meta_info[uid][experiment_type]['eval_mean'] = user_eval_result
-                # meta_info[uid][experiment_type]['score__eval_mean'] = \
-                #     (user_eval_result - lower_eval_res[experiment_type])\
-                #     / (higher_eval_res[experiment_type] - lower_eval_res[experiment_type])
+                # # 2. evaluation session mean in compare to others: (higher-current) / (higher-lower)
+                # user_eval_result = raw_info_dict[uid][experiment_type]['eval']
+                # meta_info[uid][experiment_type]['eval_mean'] = user_eval_result
+                # # meta_info[uid][experiment_type]['score__eval_mean'] = \
+                # #     (user_eval_result - lower_eval_res[experiment_type])\
+                # #     / (higher_eval_res[experiment_type] - lower_eval_res[experiment_type])
+                #
+                # # 3. find how much eps until convergence
+                # for p_type in learning_curve_factors:
+                #     meta_info[uid][experiment_type][p_type] = None
+                #
+                # total_eps = len(user_train_results)
+                # first_result = sum(user_train_results[:10]) / 10.0
+                # for i in range(total_eps):
+                #
+                #     for p_type in learning_curve_factors:
+                #         if meta_info[uid][experiment_type][p_type] is None \
+                #                 and user_train_results[i] > first_result + (user_eval_result - first_result) * learning_curve_factors[p_type]:
+                #
+                #             meta_info[uid][experiment_type][p_type] = i
 
-                # 3. find how much eps until convergence
-                for p_type in learning_curve_factors:
-                    meta_info[uid][experiment_type][p_type] = None
-
-                total_eps = len(user_train_results)
-                first_result = sum(user_train_results[:10]) / 10.0
-                for i in range(total_eps):
-
-                    for p_type in learning_curve_factors:
-                        if meta_info[uid][experiment_type][p_type] is None \
-                                and user_train_results[i] > first_result + (user_eval_result - first_result) * learning_curve_factors[p_type]:
-
-                            meta_info[uid][experiment_type][p_type] = i
-
-        # normalize results
-        self.__logger.log('normalizing results')
-        stats_keys = ['train_mean'] + learning_curve_factors.keys()
-        stats = dict()
-        for p_type in stats_keys:
-            stats[p_type] = {'lower': None, 'higher': None}
-
-        for experiment_type in exp_list:
-
-            # find higher and lower scores
-            for uid in user_ids:
-
-                for p_type in stats:
-
-                    if stats[p_type]['lower'] is None \
-                            or meta_info[uid][experiment_type][p_type] < stats[p_type]['lower']:
-                        stats[p_type]['lower'] = meta_info[uid][experiment_type][p_type]
-
-                    if stats[p_type]['higher'] is None \
-                            or meta_info[uid][experiment_type][p_type] > stats[p_type]['higher']:
-                        stats[p_type]['higher'] = meta_info[uid][experiment_type][p_type]
+        # # normalize results
+        # self.__logger.log('normalizing results')
+        # stats_keys = ['train_mean'] + learning_curve_factors.keys()
+        # stats = dict()
+        # for p_type in stats_keys:
+        #     stats[p_type] = {'lower': None, 'higher': None}
+        #
+        # for experiment_type in exp_list:
+        #
+        #     # find higher and lower scores
+        #     for uid in user_ids:
+        #
+        #         for p_type in stats:
+        #
+        #             if stats[p_type]['lower'] is None \
+        #                     or meta_info[uid][experiment_type][p_type] < stats[p_type]['lower']:
+        #                 stats[p_type]['lower'] = meta_info[uid][experiment_type][p_type]
+        #
+        #             if stats[p_type]['higher'] is None \
+        #                     or meta_info[uid][experiment_type][p_type] > stats[p_type]['higher']:
+        #                 stats[p_type]['higher'] = meta_info[uid][experiment_type][p_type]
 
             # normalize results accordingly
             # for uid in user_ids:
@@ -667,7 +665,7 @@ class ExperimentEvaluator:
         self.__logger.log('writing info to csv file')
         csv_file_path = os.path.join(os.path.dirname(__file__), 'scores.csv')
 
-        stats_keys = ['eval_mean'] + stats_keys
+        stats_keys = ['eval', 'train_mean']
         # stats_keys += ['score__' + key_name for key_name in stats_keys]
 
         with open(csv_file_path, 'wb') as csv_file:
@@ -680,7 +678,7 @@ class ExperimentEvaluator:
             for experiment_type in exp_list:
                 fields = [uid, experiment_type]
                 for key_name in stats_keys:
-                    fields.append(meta_info[uid][experiment_type][key_name])
+                    fields.append(raw_info_dict[uid][experiment_type][key_name])
 
                 with open(csv_file_path, 'ab') as csv_file:
                     writer = csv.writer(csv_file)
