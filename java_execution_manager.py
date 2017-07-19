@@ -63,7 +63,7 @@ class JavaExecutionManager:
         class_files_dir_path = os.path.realpath(class_files_dir_path)
 
         # get all dependency file paths
-        dependency_paths = JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS
+        dependency_paths = list(JavaExecutionManagerConsts.DEPENDENCY_FILE_PATHS)
         dependency_paths.append(class_files_dir_path)
 
         # build run command
