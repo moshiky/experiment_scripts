@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import csv
+from datetime import datetime
 from multiprocessing.dummy import Pool as ThreadPool
 from threading import Lock
 from logger import Logger
@@ -10,7 +11,6 @@ from git_handler import GitHandler
 from experiment_consts import ExperimentConsts
 from evaluation_consts import EvaluationConsts
 from java_execution_manager import JavaExecutionManager
-from java_execution_manager_consts import JavaExecutionManagerConsts
 
 
 class ExperimentEvaluator:
@@ -486,10 +486,33 @@ class ExperimentEvaluator:
         eval_results = list()
         train_episodes_means = None
 
+        last_time = None
+        in_eval = False
+
+        train_total_seconds = 0
+        eval_total_seconds = 0
+
+        time_format = '[%d/%m/%Y %H:%M:%S]'
+
         # iterate log lines and parse lines
         for line in log_lines:
 
-            if line.find('ex_eval_mean:') > 0:  # regular log line
+            if line.find('=== Experiment #') > 0:  # first line of train section
+                time_part = line.split(' >> ')[0]
+                curr_time = datetime.strptime(time_part, time_format)
+                if last_time is not None:
+                    eval_total_seconds += (curr_time - last_time).seconds
+                    in_eval = False
+                last_time = curr_time
+
+            elif line.find('ex_eval_mean') > 0 and not in_eval:  # line of evaluation section
+                if not in_eval:
+                    time_part = line.split(' >> ')[0]
+                    curr_time = datetime.strptime(time_part, time_format)
+                    train_total_seconds += (curr_time - last_time).seconds
+                    last_time = curr_time
+                    in_eval = True
+
                 eval_results.append(float(line.split('ex_eval_mean:')[1]))
 
             elif line.find('Train episodes mean:') > 0:
@@ -501,7 +524,12 @@ class ExperimentEvaluator:
                 train_episodes_means = list_text.split(', ')
                 train_episodes_means = map(float, train_episodes_means)
 
-        return {'eval': sum(eval_results) / len(eval_results), 'train': train_episodes_means}
+        return {
+            'train': train_episodes_means,
+            'train_time': train_total_seconds,
+            'eval': sum(eval_results) / len(eval_results),
+            'eval_time': eval_total_seconds
+        }
 
     def generate_users_score(self):
         self.__logger.log("begin score generation")
@@ -542,7 +570,7 @@ class ExperimentEvaluator:
                     self.__logger.error(
                         'log file not found: {log_file_path}'.format(log_file_path=user_log_file_path)
                     )
-                    raw_info_dict[uid][experiment_type] = {'eval': -1, 'train': [-1]}
+                    raw_info_dict[uid][experiment_type] = {'train': [-1], 'train_time': 0, 'eval': -1, 'eval_time': 0}
                     continue
 
                 # reading user run log file
@@ -665,7 +693,7 @@ class ExperimentEvaluator:
         self.__logger.log('writing info to csv file')
         csv_file_path = os.path.join(os.path.dirname(__file__), 'scores.csv')
 
-        stats_keys = ['eval', 'train_mean']
+        stats_keys = ['train_mean', 'train_time', 'eval', 'eval_time']
         # stats_keys += ['score__' + key_name for key_name in stats_keys]
 
         with open(csv_file_path, 'wb') as csv_file:
