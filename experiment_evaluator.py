@@ -505,14 +505,14 @@ class ExperimentEvaluator:
                     in_eval = False
                 last_time = curr_time
 
-            elif line.find('ex_eval_mean') > 0 and not in_eval:  # line of evaluation section
-                if not in_eval:
-                    time_part = line.split(' >> ')[0]
-                    curr_time = datetime.strptime(time_part, time_format)
-                    train_total_seconds += (curr_time - last_time).seconds
-                    last_time = curr_time
-                    in_eval = True
+            elif line.find('eval_ep') > 0 and not in_eval:  # line of evaluation section
+                time_part = line.split(' >> ')[0]
+                curr_time = datetime.strptime(time_part, time_format)
+                train_total_seconds += (curr_time - last_time).seconds
+                last_time = curr_time
+                in_eval = True
 
+            elif line.find('ex_eval_mean:') > 0:    # evaluation section mean result
                 eval_results.append(float(line.split('ex_eval_mean:')[1]))
 
             elif line.find('Train episodes mean:') > 0:
