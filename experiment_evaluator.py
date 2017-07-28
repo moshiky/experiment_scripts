@@ -342,7 +342,7 @@ class ExperimentEvaluator:
                             similarities_on_reward_shaping_folder_path_with_folder_name,
                             EvaluationConsts.EXPERIMENT_REPLACE_FILES['similarities'][0]
                         ),
-                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND['similarities'],
                         EvaluationConsts.ORIGINAL_CONDITIONS.values(),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE
                 ):
@@ -354,7 +354,7 @@ class ExperimentEvaluator:
                             similarities_on_reward_shaping_folder_path_with_folder_name,
                             EvaluationConsts.EXPERIMENT_REPLACE_FILES['reward_shaping'][0]
                         ),
-                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND,
+                        EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_COND['reward_shaping'],
                         EvaluationConsts.ORIGINAL_CONDITIONS.values(),
                         EvaluationConsts.SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE
                 ):

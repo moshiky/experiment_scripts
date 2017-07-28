@@ -58,10 +58,13 @@ class EvaluationConsts:
         'reward_shaping': r'AgentType.RewardShaping != SimpleExperiment.activeAgentType'
     }
 
-    SIMILARITIES_ON_REWARD_SHAPING_COND = \
-        '({similarities_condition}) && ({reward_shaping_condition})'.format(
-            similarities_condition=ORIGINAL_CONDITIONS['similarities'],
+    SIMILARITIES_ON_REWARD_SHAPING_COND = {\
+        'reward_shaping' : '({reward_shaping_condition}) && (AgentType.SimilaritiesOnRewardShaping != SimpleExperiment.activeAgentType)'.format(
             reward_shaping_condition=ORIGINAL_CONDITIONS['reward_shaping']
+        ),
+        'similarities' : '({similarities_condition}) && (AgentType.SimilaritiesOnRewardShaping != SimpleExperiment.activeAgentType)'.format(
+            similarities_condition=ORIGINAL_CONDITIONS['similarities']
         )
+    }
 
     RESULTS_FOLDER_NAME = r'result_storage/mario_results'
