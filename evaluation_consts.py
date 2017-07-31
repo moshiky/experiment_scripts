@@ -68,3 +68,20 @@ class EvaluationConsts:
     }
 
     RESULTS_FOLDER_NAME = r'result_storage/mario_results'
+
+    ABSTRACTION_FILE_CORRECTIONS = [
+        (
+            'float worldRewardUntilNow',
+            'float worldRewardUntilNow, boolean update'
+        ),
+        (
+            '''for (AbstractionQLambdaAgent agent : agents) {
+            agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);
+        }''',
+            '''if (update) {
+            for (AbstractionQLambdaAgent agent : agents) {
+                agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);
+            }
+        }'''
+        )
+    ]

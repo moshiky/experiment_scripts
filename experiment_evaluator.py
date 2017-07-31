@@ -232,6 +232,22 @@ class ExperimentEvaluator:
                 if self.__copy_user_experiment_files(
                         experiment_type, EvaluationConsts.USER_SOURCE_PATH, evaluation_with_user_code_folder_path
                 ):
+                    if experiment_type == 'abstraction':
+                        # apply some corrections to abstraction user file
+                        try:
+                            for correction_record in EvaluationConsts.ABSTRACTION_FILE_CORRECTIONS:
+                                if not self.__custom_file_edit(
+                                        os.path.join(evaluation_with_user_code_folder_path,
+                                                     EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type]),
+                                        correction_record[0], [correction_record[1]], '{0}'
+                                ):
+                                    raise Exception(
+                                        'failed changing abstraction file. pair: {0}'.format(correction_record)
+                                    )
+                        except Exception, ex:
+                            self.__logger.error("abstraction corrections failed. ex: {ex}".format(ex=ex))
+                            continue
+
                     if experiment_type in configuration_record:
                         folder_paths_to_evaluate.append(evaluation_with_user_code_folder_path)
                 else:
