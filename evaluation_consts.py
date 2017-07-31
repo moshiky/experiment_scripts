@@ -48,7 +48,7 @@ class EvaluationConsts:
 
     BRANCH_NOT_FOUND_EXCEPTION_STRING = 'BRANCH_NOT_FOUND'
 
-    MAX_THREADS = 4
+    MAX_THREADS = 2
 
     # replace parts for similarities on reward shaping
     SIMILARITIES_ON_REWARD_SHAPING_TEMPLATE = r'''if ({0}) {{'''
@@ -75,13 +75,14 @@ class EvaluationConsts:
             'float worldRewardUntilNow, boolean update'
         ),
         (
-            '''for (AbstractionQLambdaAgent agent : agents) {
-            agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);
-        }''',
-            '''if (update) {
-            for (AbstractionQLambdaAgent agent : agents) {
-                agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);
-            }
-        }'''
+            '        for (AbstractionQLambdaAgent agent : agents) {\r\n'
+            '            agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);\r\n'
+            '        }'
+            ,
+            '        if (update) {\r\n'
+            '           for (AbstractionQLambdaAgent agent : agents) {\r\n'
+            '                agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);\r\n'
+            '            }\r\n'
+            '        }'
         )
     ]

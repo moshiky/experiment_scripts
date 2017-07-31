@@ -238,8 +238,8 @@ class ExperimentEvaluator:
                             for correction_record in EvaluationConsts.ABSTRACTION_FILE_CORRECTIONS:
                                 if not self.__custom_file_edit(
                                         os.path.join(evaluation_with_user_code_folder_path,
-                                                     EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type]),
-                                        correction_record[0], [correction_record[1]], '{0}'
+                                                     EvaluationConsts.EXPERIMENT_REPLACE_FILES[experiment_type][0]),
+                                        correction_record[1], [correction_record[0]], '{0}'
                                 ):
                                     raise Exception(
                                         'failed changing abstraction file. pair: {0}'.format(correction_record)
