@@ -67,8 +67,6 @@ class EvaluationConsts:
         )
     }
 
-    RESULTS_FOLDER_NAME = r'result_storage/mario_results'
-
     ABSTRACTION_FILE_CORRECTIONS = [
         (
             'float worldRewardUntilNow',
