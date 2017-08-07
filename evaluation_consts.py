@@ -84,11 +84,11 @@ class EvaluationConsts:
             '        }'
         ),
         (
-            '    public int egreedyActionSelection(double[] state){\r\n'
-            '        if(RNG.randomDouble() < epsilon){'
+            '    public int egreedyActionSelection(double[] state) {\r\n'
+            '        if(RNG.randomDouble() < epsilon) {'
             ,
-            '    public int egreedyActionSelection(double[] state, boolean isTrainMode){\r\n'
-            '        if((RNG.randomDouble() < epsilon) && isTrainMode){'
+            '    public int egreedyActionSelection(double[] state, boolean isTrainMode) {\r\n'
+            '        if((RNG.randomDouble() < epsilon) && isTrainMode) {'
         ),
         (
             'int nextAction = egreedyActionSelection(currentState);',
