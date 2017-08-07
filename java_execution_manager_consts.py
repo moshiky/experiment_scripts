@@ -6,7 +6,7 @@ class JavaExecutionManagerConsts:
 
     # need to be verified and configured before each run
 
-    JDK_PATH = r'C:\Program Files\Java\jdk1.8.0_131\bin'
+    JDK_PATH = r'C:\Program Files\Java\jdk1.8.0_144\bin'
 
     # custom values for each experiment type
 
@@ -37,7 +37,7 @@ class JavaExecutionManagerConsts:
 
     COMPILE_COMMAND_TEMPLATE = '"{compiler_path}" -classpath "{dependencies}" -d "{output_path}" {source_path}'
 
-    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -Xmx7g -classpath "{dependencies}" {main_class_name}'
+    RUN_COMMAND_TEMPLATE = '"{execute_file_path}" -Xmx3g -classpath "{dependencies}" {main_class_name}'
 
     COMMAND_FAILED_EXCEPTION_STRING = 'EXTERNAL_COMMAND_FAILED'
 
