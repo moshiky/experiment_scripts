@@ -82,5 +82,16 @@ class EvaluationConsts:
             '                agent.update(this.previousState, this.previousAction, actionReward, currentState, nextAction);\r\n'
             '            }\r\n'
             '        }'
+        ),
+        (
+            '    public int egreedyActionSelection(StateAction sa){\r\n'
+            '        if(RNG.randomDouble() < epsilon){'
+            ,
+            '    public int egreedyActionSelection(StateAction sa, boolean isTrainMode){\r\n'
+            '        if((RNG.randomDouble() < epsilon) && isTrainMode){'
+        ),
+        (
+            'int action = egreedyActionSelection(sa);',
+            'int action = egreedyActionSelection(sa, update);'
         )
     ]
