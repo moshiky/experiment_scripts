@@ -125,11 +125,12 @@ class ExperimentEvaluator:
 
         return content_replaced
 
-    def generate_results(self, path_list_to_evaluate=None):
+    def generate_results(self, cmd_param=None):
 
         self.__logger.log("begin result generation")
 
-        if path_list_to_evaluate is None:
+        path_list_to_evaluate = None
+        if cmd_param is None:
             self.__logger.log('creating code folders to evaluate from ids.txt file')
 
             # read id list
@@ -393,9 +394,17 @@ class ExperimentEvaluator:
 
                 # set path list
                 path_list_to_evaluate = folder_paths_to_evaluate
-
+        
         else:
-            self.__logger.log('evaluating existing folders:\n{path_list}'.format(path_list=path_list_to_evaluate))
+            self.__logger.log('reading existing folder list from file')
+            
+            # read path list from file
+            with open(cmd_param, 'rb') as path_list_file:
+                path_list_to_evaluate = path_list_file.read().replace('\r', '').split('\n')
+                
+        self.__logger.log(
+            'evaluating existing folders:\n{path_list}'.format(path_list='\n'.join(path_list_to_evaluate))
+        )
 
         self.__logger.log('create thread pool: {num_of_threads} threads'.format(
             num_of_threads=EvaluationConsts.MAX_THREADS
@@ -416,9 +425,13 @@ class ExperimentEvaluator:
 
 if __name__ == '__main__':
     experiment_evaluator = ExperimentEvaluator()
-    if len(sys.argv) > 2 and sys.argv[1] == '-e':
+    if len(sys.argv) == 3 and sys.argv[1] == '-ef':
+        experiment_evaluator.generate_results(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == '-e':
         experiment_evaluator.generate_results(sys.argv[2:])
     elif len(sys.argv) == 1:
         experiment_evaluator.generate_results()
     else:
-        print "usage: <script_name> [-e <list of paths to execute]"
+        print "usage: <script_name> " \
+              "[-e <list of paths to execute> " \
+              "| -ef <path of a file that contains list of folder paths to evaluate>]"
