@@ -55,8 +55,11 @@ class ScoreGenerator:
             elif line.find('total time:') > 0:
                 train_end_time = datetime.strptime(line.split(' >> ')[0], time_format)
 
-        # calculate train duration
-        train_duration = (train_end_time - train_start_time).seconds - evaluation_total_time
+        if train_end_time is None:
+            raise Exception('log file not complete')
+        else:
+            # calculate train duration
+            train_duration = (train_end_time - train_start_time).seconds - evaluation_total_time
 
         # calculate mean evaluation results
         evaluation_mean_results = [float(x[0])/x[1] for x in evaluation_mean_results_sum]
@@ -81,6 +84,7 @@ class ScoreGenerator:
 
         max_evaluation_sections_number = 0
         raw_info_dict = dict()
+        error_row = {'evaluation_mean_results': [-1], 'evaluation_mean_duration': -1, 'train_mean_duration': -1}
         for uid in user_ids:
 
             raw_info_dict[uid] = dict()
@@ -100,7 +104,7 @@ class ScoreGenerator:
                     self.__logger.error(
                         'log file not found: {log_file_path}'.format(log_file_path=user_log_file_path)
                     )
-                    raw_info_dict[uid][experiment_type] = {'train': [-1], 'train_time': 0, 'eval': -1, 'eval_time': 0}
+                    raw_info_dict[uid][experiment_type] = error_row
                     continue
 
                 # reading user run log file
@@ -121,7 +125,8 @@ class ScoreGenerator:
                     self.__logger.error('log file parsing failed. uid={uid} exp_type={exp_type} ex={ex}'.format(
                         uid=uid, exp_type=experiment_type, ex=ex
                     ))
-                    return None
+                    raw_info_dict[uid][experiment_type] = error_row
+                    continue
 
                 # compare evaluation results list to max length
                 if len(raw_info_dict[uid][experiment_type]['evaluation_mean_results']) > max_evaluation_sections_number:
