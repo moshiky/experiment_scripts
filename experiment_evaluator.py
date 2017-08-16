@@ -392,8 +392,8 @@ class ExperimentEvaluator:
                 # add folder path to folder_paths_to_evaluate
                 folder_paths_to_evaluate.append(similarities_on_reward_shaping_folder_path_with_folder_name)
 
-                # set path list
-                path_list_to_evaluate = folder_paths_to_evaluate
+            # set path list
+            path_list_to_evaluate = folder_paths_to_evaluate
         
         else:
             self.__logger.log('reading existing folder list from file')
