@@ -18,9 +18,9 @@ class ScoreGenerator:
         evaluation_total_time = 0
         evaluation_start_time = None
         evaluation_section_id = 0
-        train_end_time = None
-        train_start_time = None
         epoch_id = 0
+        train_session_start_time = None
+        train_total_duration = 0
 
         # parse log lines
         time_format = '[%d/%m/%Y %H:%M:%S]'
@@ -28,13 +28,19 @@ class ScoreGenerator:
 
             if line.find('=== Experiment #') > 0:  # first line of train epoch
                 log_line_time = datetime.strptime(line.split(' >> ')[0], time_format)
-                if line.find(' #0 ') > 0:     # train start
-                    train_start_time = log_line_time
                 epoch_id += 1
                 evaluation_section_id = 0
+                train_session_start_time = log_line_time
+
+            elif line.find('ERROR: session timeout') > 0:
+                log_line_time = datetime.strptime(line.split(' >> ')[0], time_format)
+                train_total_duration += (log_line_time - train_session_start_time).seconds
+                train_session_start_time = None
 
             elif line.find('-- Evaluation --') > 0:
                 evaluation_start_time = datetime.strptime(line.split(' >> ')[0], time_format)
+                train_total_duration += (evaluation_start_time - train_session_start_time).seconds
+                train_session_start_time = None
 
             elif line.find('evaluation results:') > 0:
                 evaluation_end_time = datetime.strptime(line.split(' >> ')[0], time_format)
@@ -52,14 +58,13 @@ class ScoreGenerator:
                         )
                 evaluation_section_id += 1
 
-            elif line.find('total time:') > 0:
-                train_end_time = datetime.strptime(line.split(' >> ')[0], time_format)
+                train_session_start_time = datetime.strptime(line.split(' >> ')[0], time_format)
 
-        if train_end_time is None:
-            raise Exception('log file not complete')
-        else:
-            # calculate train duration
-            train_duration = (train_end_time - train_start_time).seconds - evaluation_total_time
+        if train_total_duration < 0:
+            print 'ttd problem!'
+
+        if epoch_id < 10:
+            raise Exception('log file not complete- less than 50 epochs')
 
         # calculate mean evaluation results
         evaluation_mean_results = [float(x[0])/x[1] for x in evaluation_mean_results_sum]
@@ -68,7 +73,7 @@ class ScoreGenerator:
         return {
             'evaluation_mean_results': evaluation_mean_results,
             'evaluation_mean_duration': float(evaluation_total_time) / epoch_id,
-            'train_mean_duration': float(train_duration) / epoch_id
+            'train_mean_duration': float(train_total_duration) / epoch_id
         }
 
     def generate_users_score(self, results_folder_path):
@@ -155,9 +160,12 @@ class ScoreGenerator:
 
         for uid in user_ids:
             for experiment_type in exp_list:
-                fields = [uid, experiment_type]
-                for key_name in stats_keys:
-                    fields.append(raw_info_dict[uid][experiment_type][key_name])
+                fields = [
+                    uid,
+                    experiment_type,
+                    raw_info_dict[uid][experiment_type]['train_mean_duration'],
+                    raw_info_dict[uid][experiment_type]['evaluation_mean_duration']
+                ]
                 for eval_id in range(max_evaluation_sections_number):
                     fields.append(raw_info_dict[uid][experiment_type]['evaluation_mean_results'][eval_id])
 
