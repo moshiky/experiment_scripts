@@ -2,6 +2,7 @@
 import os
 import sys
 import csv
+import numpy as np
 from datetime import datetime
 from logger import Logger
 from evaluation_consts import EvaluationConsts
@@ -21,6 +22,8 @@ class ScoreGenerator:
         epoch_id = 0
         train_session_start_time = None
         train_total_duration = 0
+
+        all_evaluation_results = list()
 
         # parse log lines
         time_format = '[%d/%m/%Y %H:%M:%S]'
@@ -46,6 +49,15 @@ class ScoreGenerator:
                 evaluation_end_time = datetime.strptime(line.split(' >> ')[0], time_format)
                 evaluation_total_time += (evaluation_end_time - evaluation_start_time).seconds + 0.5
 
+                evaluation_results_string = \
+                    line.split('evaluation results: ')[1].replace('[', '').replace(']', '').replace(' ', '')
+                evaluation_results = [float(x) for x in evaluation_results_string.split(',')]
+
+                if len(all_evaluation_results) == evaluation_section_id:
+                    all_evaluation_results.append(evaluation_results)
+                else:
+                    all_evaluation_results[evaluation_section_id] += evaluation_results
+
             elif line.find('mean result:') > 0:
                 evaluation_mean_result = float(line.split('mean result: ')[1])
                 if epoch_id == 0 or len(evaluation_mean_results_sum) == evaluation_section_id:
@@ -69,9 +81,19 @@ class ScoreGenerator:
         # calculate mean evaluation results
         evaluation_mean_results = [float(x[0])/x[1] for x in evaluation_mean_results_sum]
 
+        # calculate standard deviation
+        evaluation_standard_deviation = list()
+        for eval_index in range(len(all_evaluation_results)):
+            top_sum = 0
+            for i in range(len(all_evaluation_results[eval_index])):
+                top_sum += ((all_evaluation_results[eval_index][i] - evaluation_mean_results[eval_index]) ** 2)
+
+            evaluation_standard_deviation.append(np.sqrt(float(top_sum) / len(all_evaluation_results[eval_index])))
+
         # return results
         return {
             'evaluation_mean_results': evaluation_mean_results,
+            'evaluation_standard_deviation': list(evaluation_standard_deviation),
             'evaluation_mean_duration': float(evaluation_total_time) / epoch_id,
             'train_mean_duration': float(train_total_duration) / epoch_id
         }
@@ -89,7 +111,9 @@ class ScoreGenerator:
 
         max_evaluation_sections_number = 0
         raw_info_dict = dict()
-        error_row = {'evaluation_mean_results': [-1], 'evaluation_mean_duration': -1, 'train_mean_duration': -1}
+        error_row = \
+            {'evaluation_mean_results': [], 'evaluation_standard_deviation': [],
+             'evaluation_mean_duration': -1, 'train_mean_duration': -1}
         for uid in user_ids:
 
             raw_info_dict[uid] = dict()
@@ -145,6 +169,7 @@ class ScoreGenerator:
                     evaluation_results += [''] * (max_evaluation_sections_number - len(evaluation_results))
 
         evaluation_sections_marks = ['eval_' + str(eval_id) for eval_id in range(max_evaluation_sections_number)]
+        evaluation_sd_sections_marks = ['eval_sd_' + str(eval_id) for eval_id in range(max_evaluation_sections_number)]
 
         # write results to csv
         self.__logger.log('writing info to csv file')
@@ -155,7 +180,8 @@ class ScoreGenerator:
         with open(csv_file_path, 'wb') as csv_file:
             writer = csv.writer(csv_file)
 
-            headers = ['user_id', 'experiment_type'] + stats_keys + evaluation_sections_marks
+            headers = \
+                ['user_id', 'experiment_type'] + stats_keys + evaluation_sections_marks + evaluation_sd_sections_marks
             writer.writerow(headers)
 
         for uid in user_ids:
@@ -166,8 +192,10 @@ class ScoreGenerator:
                     raw_info_dict[uid][experiment_type]['train_mean_duration'],
                     raw_info_dict[uid][experiment_type]['evaluation_mean_duration']
                 ]
-                for eval_id in range(max_evaluation_sections_number):
+                for eval_id in range(len(raw_info_dict[uid][experiment_type]['evaluation_mean_results'])):
                     fields.append(raw_info_dict[uid][experiment_type]['evaluation_mean_results'][eval_id])
+                for eval_id in range(len(raw_info_dict[uid][experiment_type]['evaluation_standard_deviation'])):
+                    fields.append(raw_info_dict[uid][experiment_type]['evaluation_standard_deviation'][eval_id])
 
                 with open(csv_file_path, 'ab') as csv_file:
                     writer = csv.writer(csv_file)
