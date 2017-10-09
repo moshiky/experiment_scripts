@@ -13,7 +13,8 @@ class JavaExecutionManagerConsts:
     DEPENDENCY_FILE_PATHS = [
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jfreechart-1.0.19.jar',
         r'C:\exp\libs\jfreechart-1.0.19\jfreechart-1.0.19\lib\jcommon-1.0.23.jar',
-        r'C:\exp\libs\commons-lang3-3.6-bin\commons-lang3-3.6\commons-lang3-3.6.jar'
+        r'C:\exp\libs\commons-lang3-3.6\commons-lang3-3.6.jar',
+        r'C:\exp\libs\commons-math3-3.6.1-bin\commons-math3-3.6.1\commons-math3-3.6.1.jar'
     ]
 
     SOURCE_FILES = [
